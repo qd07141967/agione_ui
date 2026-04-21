@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+/* 小红书风格封面设计 */
+.cover-container {
+  width: 1080px;
+  height: 1920px;
+  background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+  border-radius: 30px;
+  padding: 60px;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.title-box {
+  background: rgba(255,255,255,0.9);
+  padding: 40px;
+  border-radius: 20px;
+  margin-bottom: 50px;
+  transform: rotate(-2deg);
+}
+
+.main-title {
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-size: 88px;
+  color: #FF1493;
+  text-shadow: 4px 4px 0 rgba(255,255,255,0.5);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: 4px;
+}
+
+.sub-title {
+  font-size: 48px;
+  color: #333;
+  margin-top: 30px;
+  display: inline-block;
+  background: linear-gradient(90deg, #FF69B4, #FFB6C1);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.step-container {
+  display: grid;
+  gap: 40px;
+  margin-top: 80px;
+}
+
+.step-item {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.emoji {
+  font-size: 64px;
+  margin-right: 30px;
+}
+
+.decorative-line {
+  position: absolute;
+  width: 80%;
+  height: 8px;
+  background: white;
+  bottom: 120px;
+  left: 10%;
+  border-radius: 4px;
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 48px;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+</style>
+</head>
+<body>
+
+<div class="cover-container">
+  <!-- 动态装饰元素 -->
+  <div class="sparkle" style="top:15%;left:10%">✨</div>
+  <div class="sparkle" style="top:30%;right:15%">🔥</div>
+  
+  <div class="title-box">
+    <h1 class="main-title">小红书运营SOP流程</h1>
+    <h2 class="sub-title">从0到1打造爆款账号</h2>
+  </div>
+
+  <div class="step-container">
+    <div class="step-item">
+      <span class="emoji">📌</span>
+      <div>
+        <h3 style="margin:0;font-size:42px;color:#FF1493">7步核心流程</h3>
+        <p style="font-size:36px;color:#666;margin:10px 0 0">定位→内容→运营→变现</p >
+      </div>
+    </div>
+
+    <div class="step-item">
+      <span class="emoji">💡</span>
+      <div>
+        <h3 style="margin:0;font-size:42px;color:#FF1493">附送全套工具包</h3>
+        <p style="font-size:36px;color:#666;margin:10px 0 0">选题表+排版模板+数据分析</p >
+      </div>
+    </div>
+  </div>
+
+  <div class="decorative-line"></div>
+  
+  <p style="position:absolute;bottom:60px;right:60px;font-size:48px;color:white">
+    👉立即收藏实践
+  </p >
+</div>
+
+</body>
+</html>
