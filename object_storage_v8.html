@@ -1,0 +1,878 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AGIOne 对象存储原型 V8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+    />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 20%),
+          radial-gradient(circle at 85% 12%, rgba(14, 165, 233, 0.12), transparent 18%),
+          linear-gradient(180deg, #f6f9fd 0%, #f2f5fa 100%);
+        color: #172033;
+      }
+      [v-cloak] { display: none; }
+      .top {
+        position: fixed; inset: 0 0 auto 0; height: 60px; z-index: 20;
+        display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+        background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      .brand { display: flex; align-items: center; gap: 14px; }
+      .mark { width: 34px; height: 34px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #38bdf8); position: relative; }
+      .mark::before, .mark::after { content: ""; position: absolute; background: #fff; border-radius: 999px; }
+      .mark::before { width: 16px; height: 3px; left: 9px; top: 10px; }
+      .mark::after { width: 10px; height: 3px; left: 12px; top: 18px; }
+      .side {
+        position: fixed; top: 60px; left: 0; bottom: 0; width: 212px; padding: 16px 12px;
+        background: rgba(248, 250, 255, 0.86); backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      .main { margin-left: 212px; padding: 76px 20px 20px; }
+      .card {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+      }
+      .menu {
+        width: 100%; margin-bottom: 8px; padding: 12px 14px; border: 0; border-radius: 16px;
+        background: transparent; text-align: left; cursor: pointer;
+      }
+      .menu:hover, .menu.active {
+        background: #fff; color: #2563eb; box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
+      }
+      .workbench { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 14px; margin-top: 12px; }
+      .left { padding: 14px; position: sticky; top: 76px; height: calc(100vh - 96px); overflow: auto; }
+      .bucket {
+        margin-top: 8px;
+        padding: 12px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 16px;
+        background: linear-gradient(180deg, #ffffff, #f7faff);
+        cursor: pointer;
+      }
+      .bucket:hover, .bucket.active { border-color: rgba(37, 99, 235, 0.3); box-shadow: 0 12px 28px rgba(30, 41, 59, 0.08); }
+      .bucket-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .bucket-name { font-size: 13px; font-weight: 800; line-height: 1.35; word-break: break-all; }
+      .bucket-sub { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #64748b; }
+      .bucket-sub strong { color: #1e293b; font-weight: 700; }
+      .summary {
+        padding: 10px 12px;
+        border: 1px solid rgba(37, 99, 235, 0.12);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 28%),
+          linear-gradient(135deg, #ffffff, #f6f9ff);
+      }
+      .summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .summary-title { font-size: 22px; line-height: 1.05; }
+      .summary-desc { margin-top: 2px; line-height: 1.45; font-size: 12px; max-width: 520px; }
+      .summary-desc { margin-top: 6px; line-height: 1.45; font-size: 12px; max-width: 520px; }
+      .summary-meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .summary-chip {
+        display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+        background: rgba(255,255,255,0.92); border: 1px solid rgba(148, 163, 184, 0.16); font-size: 12px; color: #475569;
+      }
+      .summary-progress {
+        margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+      .summary-progress-top { display: flex; align-items: stretch; justify-content: space-between; gap: 12px; }
+      .summary-progress-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 148px; gap: 12px; align-items: stretch; }
+      .summary-progress-card,
+      .summary-progress-side {
+        padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+      .summary-progress-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .summary-progress-side { text-align: left; min-width: 0; }
+      .summary-progress-side .summary-value { margin-top: 4px; }
+      .summary-usage-tag { display: inline-flex; align-items: center; padding: 0 2px; font-size: 14px; font-weight: 800; color: #334155; }
+      .summary-strip.single-stat { display: none; }
+      @media (max-width: 960px) { .summary-progress-main { grid-template-columns: 1fr; } }
+      .summary-progress-bar { margin-top: 10px; height: 10px; border-radius: 999px; background: rgba(226, 232, 240, 0.9); overflow: hidden; }
+      .summary-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(135deg, #2563eb, #38bdf8); }
+      .summary-progress-fill.unlimited { width: 100%; background: linear-gradient(135deg, rgba(37, 99, 235, 0.45), rgba(56, 189, 248, 0.7)); }
+      .summary-strip {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .summary-stat {
+        min-width: 0;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+      .summary-label {
+        font-size: 11px;
+        font-weight: 800;
+        color: #64748b;
+        letter-spacing: 0.02em;
+      }
+      .summary-value {
+        margin-top: 4px;
+        font-size: 16px;
+        font-weight: 800;
+        color: #172033;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tabs { display: flex; gap: 8px; margin-top: 10px; }
+      .tab {
+        padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(255, 255, 255, 0.76); font-weight: 700; color: #64748b; cursor: pointer;
+      }
+      .tab.active { background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff; border-color: transparent; }
+      .content { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; margin-top: 12px; }
+      .content-wide { grid-template-columns: minmax(0, 1fr); }
+      .sidecard { padding: 18px; }
+      .tip { margin-top: 10px; padding: 12px 14px; border-radius: 16px; background: #eff6ff; color: #546074; line-height: 1.7; }
+      .muted { color: #64748b; }
+      .bucket-tools {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .bucket-search {
+        padding: 6px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 18px;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+      }
+      .bucket-search .el-input__wrapper {
+        box-shadow: none !important;
+        background: #fff;
+        border-radius: 12px;
+      }
+      .bucket-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .rule-box {
+        margin-top: 10px;
+        padding: 14px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f8fbff, #f3f7ff);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+      .rule-title {
+        font-size: 12px;
+        font-weight: 800;
+        color: #475569;
+        letter-spacing: 0.02em;
+      }
+      .rule-list {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: #475569;
+        line-height: 1.7;
+        font-size: 13px;
+      }
+      .rule-list li + li { margin-top: 4px; }
+      .rule-inline {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .rule-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        font-size: 12px;
+        color: #475569;
+      }
+      .collapse-clean .el-collapse-item__header { font-weight: 700; }
+      .collapse-clean .el-collapse-item__wrap { border-bottom: 0; }
+      .table-panel-head { padding: 14px 16px; }
+      .path-row { margin-top: 8px; }
+      .file-table .el-table__cell,
+      .share-table .el-table__cell { padding-top: 8px; padding-bottom: 8px; }
+      .file-table .cell,
+      .share-table .cell { padding-left: 8px; padding-right: 8px; }
+      .compact-actions { gap: 4px; flex-wrap: nowrap; white-space: nowrap; }
+      @media (max-width: 1280px) { .workbench, .content, .summary-strip { grid-template-columns: 1fr; } .left { position: static; height: auto; } }
+      @media (max-width: 960px) { .side { display: none; } .main { margin-left: 0; padding: 76px 16px 20px; } }
+    </style>
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <header class="top">
+        <div class="brand">
+          <div class="mark"></div>
+          <div>
+            <div class="text-lg font-extrabold">AGIOne</div>
+            <div class="text-xs text-slate-500">{{ t("对象存储工作台", "Object Storage Console") }}</div>
+          </div>
+        </div>
+        <div class="hidden md:flex gap-6 text-sm text-slate-500">
+          <span>{{ t("工作台", "Workbench") }}</span>
+          <span class="text-blue-600 font-bold">{{ t("存储", "Storage") }}</span>
+          <span>{{ t("任务", "Jobs") }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <el-select v-model="region" size="small" style="width: 136px">
+            <el-option label="华东-上海一" value="华东-上海一"></el-option>
+            <el-option label="华北-北京一" value="华北-北京一"></el-option>
+          </el-select>
+          <el-select v-model="lang" size="small" style="width: 110px">
+            <el-option label="中文" value="zh"></el-option>
+            <el-option label="English" value="en"></el-option>
+          </el-select>
+          <div class="grid h-9 w-9 place-items-center rounded-full bg-cyan-600 font-bold text-white">WM</div>
+        </div>
+      </header>
+
+      <aside class="side">
+        <div class="px-2 pb-2 text-xs font-bold text-slate-400">{{ t("资源空间", "Resource Space") }}</div>
+        <button
+          v-for="m in menus"
+          :key="m.id"
+          class="menu"
+          :class="{ active: m.id === currentMenu }"
+          @click="currentMenu = m.id"
+        >
+          {{ text(m.label) }}
+        </button>
+      </aside>
+
+      <main class="main">
+        <section class="workbench">
+          <div class="card left">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-lg font-extrabold">{{ t("存储桶", "Buckets") }}</div>
+              </div>
+              <el-tag round type="primary">{{ visibleBuckets.length }}</el-tag>
+            </div>
+            <div class="bucket-tools">
+              <div class="bucket-search">
+                <el-input v-model="filters.keyword" :placeholder="t('搜索桶名称', 'Search bucket name')" clearable @keyup.enter="hint('search')"></el-input>
+              </div>
+              <div class="bucket-actions">
+                <el-button type="primary" style="width: 100%" @click="bucketDialog = true">{{ t("新增桶", "New Bucket") }}</el-button>
+              </div>
+            </div>
+            <div
+              v-for="b in visibleBuckets"
+              :key="b.id"
+              class="bucket"
+              :class="{ active: b.id === activeBucketId }"
+              @click="switchBucket(b.id)"
+            >
+              <div class="bucket-top">
+                <div class="min-w-0">
+                  <div class="bucket-name">{{ b.name }}</div>
+                </div>
+              </div>
+              <div class="bucket-sub">
+                <span>{{ t("利用率", "Usage") }} <strong>{{ bucketUsageText(b) }}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-4 md:p-5">
+            <div class="summary">
+              <div class="summary-header">
+                <div class="min-w-0">
+                  <div class="summary-title font-extrabold tracking-tight">{{ activeBucket.name }}</div>
+                  <div class="summary-desc muted">{{ activeBucket.desc }}</div>
+                  <div class="summary-meta">
+                    <span class="summary-chip">{{ t("地域", "Region") }}：{{ activeBucket.region }}</span>
+                    <span class="summary-chip">{{ t("创建人", "Owner") }}：{{ activeBucket.owner }}</span>
+                    <span class="summary-chip">{{ t("创建时间", "Created") }}：{{ activeBucket.createdAt }}</span>
+                    <span class="summary-chip">{{ t("最近更新", "Updated") }}：{{ activeBucket.updatedAt }}</span>
+                  </div>
+                </div>
+                <el-tag round type="primary">{{ activeBucket.region }}</el-tag>
+              </div>
+              <div class="summary-progress">
+                <div class="summary-progress-top">
+                  <div class="summary-progress-main">
+                    <div class="summary-progress-card">
+                      <div class="summary-progress-card-head">
+                        <div>
+                          <div class="summary-label">{{ t("容量使用情况", "Capacity Usage") }}</div>
+                          <div class="summary-value">{{ activeBucket.used }} / {{ quotaDisplay(activeBucket) }}</div>
+                        </div>
+                        <div class="summary-usage-tag">{{ bucketUsageText(activeBucket) }}</div>
+                      </div>
+                      <div class="summary-progress-bar">
+                        <div
+                          class="summary-progress-fill"
+                          :class="{ unlimited: activeBucket.unlimited }"
+                          :style="activeBucket.unlimited ? null : { width: Math.min(activeBucket.usage, 100) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="summary-progress-side">
+                      <div class="summary-label">{{ t("对象数目", "Objects") }}</div>
+                      <div class="summary-value">{{ bucketObjectText(activeBucket.objects) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="summary-strip single-stat"></div>
+            </div>
+
+            <div class="tabs">
+              <button class="tab" :class="{ active: tab === 'files' }" @click="tab = 'files'">{{ t("文件信息", "Files") }}</button>
+              <button class="tab" :class="{ active: tab === 'shares' }" @click="tab = 'shares'">{{ t("共享文件", "Shared Files") }}</button>
+            </div>
+
+            <div v-if="tab === 'files'" class="content content-wide">
+              <div class="card overflow-hidden">
+                <div class="table-panel-head border-b border-slate-200/70">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div class="text-lg font-extrabold">{{ t("文件工作区", "File Workspace") }}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <el-button text type="primary" @click="goParent" :disabled="currentPath === '/'">{{ t("返回上一级", "Upper Level") }}</el-button>
+                      <el-dropdown @command="openUpload">
+                        <el-button type="primary">{{ t("上传", "Upload") }}</el-button>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item command="file">{{ t("上传文件", "Upload File") }}</el-dropdown-item>
+                            <el-dropdown-item command="folder">{{ t("上传文件夹", "Upload Folder") }}</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                      <el-button plain type="primary" @click="pathDialog = true">{{ t("新建目录", "New Folder") }}</el-button>
+                    </div>
+                  </div>
+                  <div class="path-row flex flex-wrap items-center gap-2 text-sm">
+                    <span class="muted">{{ t("路径", "Path") }}</span>
+                    <template v-for="c in crumbs" :key="c.path">
+                      <span class="cursor-pointer text-blue-600" @click="currentPath = c.path">{{ c.label }}</span>
+                      <span class="muted">/</span>
+                    </template>
+                  </div>
+                </div>
+                <el-table :data="currentFiles" class="file-table" style="width: 100%" table-layout="auto">
+                  <el-table-column :label="t('名称', 'Name')" min-width="332">
+                    <template #default="{ row }">
+                      <div class="flex items-center gap-3">
+                        <el-tag :type="row.type === 'folder' ? 'warning' : 'info'" round>{{ row.type === "folder" ? t("目录", "DIR") : t("文件", "FILE") }}</el-tag>
+                        <div>
+                          <div class="cursor-pointer font-extrabold" @click="openRow(row)">{{ row.name }}</div>
+                          <div class="mt-1 text-xs muted">{{ row.type === "folder" ? t("点击进入目录", "Click to enter") : row.path }}</div>
+                        </div>
+                      </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="size" :label="t('大小', 'Size')" min-width="88"></el-table-column>
+                  <el-table-column :label="t('权限', 'Policy')" min-width="116">
+                    <template #default="{ row }">
+                      <span v-if="row.type === 'folder'" class="muted">-</span>
+                      <el-tag v-else-if="filePolicy(row)" :type="policyType(filePolicy(row))" effect="plain">{{ policyText(filePolicy(row)) }}</el-tag>
+                      <span v-else class="muted">-</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="modified" :label="t('最后修改时间', 'Last Modified')" min-width="176"></el-table-column>
+                  <el-table-column :label="t('操作', 'Actions')" width="128" fixed="right">
+                    <template #default="{ row }">
+                      <div class="compact-actions flex">
+                        <el-button text type="primary" @click="openRow(row)">{{ row.type === "folder" ? t("进入", "Enter") : t("下载", "Download") }}</el-button>
+                        <el-button text type="danger" @click="removeRow(row)">{{ t("删除", "Delete") }}</el-button>
+                      </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+
+            <div v-else class="content content-wide">
+              <div class="card overflow-hidden">
+                <div class="table-panel-head flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70">
+                  <div>
+                    <div class="text-lg font-extrabold">{{ t("共享文件策略", "Shared File Policies") }}</div>
+                  </div>
+                  <el-button type="primary" @click="openShare()">{{ t("新增共享", "New Share") }}</el-button>
+                </div>
+                <div class="flex flex-wrap gap-2 px-4 pb-3 pt-3">
+                  <el-select v-model="shareFilter.policy" style="width: 180px">
+                    <el-option :label="t('全部策略', 'All Policies')" value="all"></el-option>
+                    <el-option :label="t('只读', 'Read Only')" value="readonly"></el-option>
+                    <el-option :label="t('只写', 'Write Only')" value="writeonly"></el-option>
+                    <el-option :label="t('读写', 'Read & Write')" value="readwrite"></el-option>
+                  </el-select>
+                  <el-input v-model="shareFilter.keyword" :placeholder="t('搜索共享文件名称', 'Search shared file name')" clearable style="max-width: 320px"></el-input>
+                </div>
+                <el-table :data="filteredShares" class="share-table" style="width: 100%" table-layout="auto">
+                  <el-table-column :label="t('名称', 'Name')" min-width="360">
+                    <template #default="{ row }">
+                      <div class="font-extrabold">{{ row.name }}</div>
+                      <div class="mt-1 text-xs muted">{{ row.path }}</div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="t('策略', 'Policy')" min-width="140">
+                    <template #default="{ row }">
+                      <el-tag :type="policyType(row.policy)" effect="plain">{{ policyText(row.policy) }}</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="updatedAt" :label="t('更新时间', 'Updated At')" min-width="210"></el-table-column>
+                  <el-table-column :label="t('操作', 'Actions')" width="170">
+                    <template #default="{ row }">
+                      <div class="compact-actions flex">
+                        <el-button text type="primary" @click="editShare(row)">{{ t("调整", "Edit") }}</el-button>
+                        <el-button text type="danger" @click="removeShare(row)">{{ t("删除", "Delete") }}</el-button>
+                      </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <el-dialog v-model="bucketDialog" :title="t('新增桶', 'New Bucket')" width="560px">
+        <el-form label-position="top">
+          <el-form-item :label="t('桶名称', 'Bucket Name')">
+            <el-input v-model="bucketForm.name" :placeholder="t('请输入符合规范的桶名称', 'Enter a valid bucket name')"></el-input>
+          </el-form-item>
+          <el-form-item :label="t('桶描述', 'Bucket Description')">
+            <el-input
+              v-model="bucketForm.desc"
+              type="textarea"
+              :rows="3"
+              resize="none"
+              :placeholder="t('请输入桶的描述信息', 'Enter a short bucket description')"
+            ></el-input>
+          </el-form-item>
+          <el-collapse class="collapse-clean mt-3" accordion>
+            <el-collapse-item :title="t('查看完整命名规则', 'View Full Naming Rules')" name="naming-rules">
+              <div class="rule-box !mt-0">
+                <div class="rule-title">{{ t("命名规则", "Naming Rules") }}</div>
+                <div class="rule-inline">
+                  <span class="rule-chip">3-63</span>
+                  <span class="rule-chip">a-z</span>
+                  <span class="rule-chip">0-9</span>
+                  <span class="rule-chip">.</span>
+                  <span class="rule-chip">-</span>
+                  <span class="rule-chip">no IP</span>
+                  <span class="rule-chip">no xn--</span>
+                  <span class="rule-chip">no -s3alias</span>
+                </div>
+                <ol class="rule-list">
+                  <li>{{ t("长度必须在 3-63 个字符之间。", "Length must be between 3 and 63 characters.") }}</li>
+                  <li>{{ t("只能由小写字母、数字、点（.）和连字符（-）组成。", "Use lowercase letters, numbers, dots (.) and hyphens (-) only.") }}</li>
+                  <li>{{ t("不得包含两个相邻句点，句点也不能与连字符相邻。", "Do not use adjacent dots, or dots adjacent to hyphens.") }}</li>
+                  <li>{{ t("不得格式化为 IP 地址，例如 192.168.5.4。", "Do not use an IP-address format such as 192.168.5.4.") }}</li>
+                  <li>{{ t("不得以前缀 xn-- 开头。", "Do not start with the prefix xn--.") }}</li>
+                  <li>{{ t("不得以后缀 -s3alias 结尾，该后缀保留给访问点别名。", "Do not end with -s3alias, which is reserved for access point aliases.") }}</li>
+                </ol>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </el-form>
+        <template #footer>
+          <el-button @click="bucketDialog = false">{{ t("取消", "Cancel") }}</el-button>
+          <el-button type="primary" @click="createBucket">{{ t("创建", "Create") }}</el-button>
+        </template>
+      </el-dialog>
+
+      <el-dialog v-model="pathDialog" :title="t('创建目录', 'Create Folder')" width="520px">
+        <el-form label-position="top">
+          <el-form-item :label="t('当前目录', 'Current Folder')"><el-input :model-value="currentPath" readonly disabled></el-input></el-form-item>
+          <el-form-item :label="t('目录名称', 'Folder Name')"><el-input v-model="pathForm.name" :placeholder="t('请输入目录名称', 'Enter folder name')"></el-input></el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="pathDialog = false">{{ t("取消", "Cancel") }}</el-button>
+          <el-button type="primary" @click="createPath">{{ t("创建", "Create") }}</el-button>
+        </template>
+      </el-dialog>
+
+      <el-dialog v-model="uploadDialog" :title="t(uploadMode === 'folder' ? '上传文件夹' : '上传文件', uploadMode === 'folder' ? 'Upload Folder' : 'Upload File')" width="560px">
+        <el-form label-position="top">
+          <el-form-item :label="t('当前目录', 'Current Path')">
+            <el-input :model-value="currentPath" readonly disabled></el-input>
+          </el-form-item>
+        </el-form>
+        <div class="tip">{{ uploadMode === "folder" ? t("会保持本地原有目录层级。", "Local folder hierarchy will be kept.") : t("同名文件会覆盖当前路径中的旧文件。", "Same-name file overwrites the existing file in current path.") }}</div>
+        <div class="mt-3">
+          <div v-for="q in uploadQueue" :key="q.name" class="tip flex items-center justify-between">
+            <span>{{ q.name }}</span>
+            <el-tag type="success">{{ q.state }}</el-tag>
+          </div>
+        </div>
+        <template #footer>
+          <el-button @click="uploadDialog = false">{{ t("取消", "Cancel") }}</el-button>
+          <el-button type="primary" @click="confirmUpload">{{ t("确认上传", "Confirm") }}</el-button>
+        </template>
+      </el-dialog>
+
+      <el-dialog v-model="shareDialog" :title="t('添加共享文件', 'Add Shared File')" :width="shareDialogMode === 'picker' ? '780px' : '440px'">
+        <div class="grid gap-4" :class="shareDialogMode === 'picker' ? 'md:grid-cols-2' : 'grid-cols-1'">
+          <div v-if="shareDialogMode === 'picker'">
+            <div class="mb-2 text-sm font-bold text-slate-400">{{ t("文件", "File") }}</div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <el-tree ref="shareTree" :data="shareTreeData" node-key="path" show-checkbox check-strictly default-expand-all :props="{ label: 'label', children: 'children', disabled: 'disabled' }" @check-change="pickShare"></el-tree>
+            </div>
+            <div class="tip">{{ t("目录只用于浏览和辅助选择，只有文件可以配置共享策略。", "Folders are for browsing only; only files can be shared.") }}</div>
+          </div>
+          <div>
+            <div class="mb-2 text-sm font-bold text-slate-400">{{ t("权限", "Policy") }}</div>
+            <div class="grid gap-2">
+              <div class="tip cursor-pointer" :class="sharePolicy === 'readonly' ? 'ring-2 ring-blue-500' : ''" @click="sharePolicy = 'readonly'"><b>{{ t("只读", "Read Only") }}</b><br />{{ t("允许读取内容。", "Allows reading content.") }}</div>
+              <div class="tip cursor-pointer" :class="sharePolicy === 'writeonly' ? 'ring-2 ring-blue-500' : ''" @click="sharePolicy = 'writeonly'"><b>{{ t("只写", "Write Only") }}</b><br />{{ t("不可列目录和读取已有文件。", "Cannot list directories or read existing files.") }}</div>
+              <div class="tip cursor-pointer" :class="sharePolicy === 'readwrite' ? 'ring-2 ring-blue-500' : ''" @click="sharePolicy = 'readwrite'"><b>{{ t("读写", "Read & Write") }}</b><br />{{ t("允许覆盖和删除。", "Allows overwrite and delete.") }}</div>
+            </div>
+            <div class="tip">{{ t("当前选择", "Current selection") }}: {{ shareTargets.length ? shareTargets.join(', ') : t("未选择文件", "No file selected") }}</div>
+          </div>
+        </div>
+        <template #footer>
+          <el-button @click="shareDialog = false">{{ t("取消", "Cancel") }}</el-button>
+          <el-button type="primary" @click="saveShare">{{ t("确认", "Confirm") }}</el-button>
+        </template>
+      </el-dialog>
+    </div>
+    <script>
+      (() => {
+        const { createApp } = Vue;
+        const { ElMessage, ElMessageBox } = ElementPlus;
+        createApp({
+          data() {
+            return {
+              lang: "zh",
+              region: "华东-上海一",
+              currentMenu: "object",
+              tab: "files",
+              activeBucketId: "b1",
+              currentPath: "/",
+              fileInfoPanels: [],
+              shareInfoPanels: [],
+              bucketDialog: false,
+              pathDialog: false,
+              uploadDialog: false,
+              shareDialog: false,
+              shareDialogMode: "picker",
+              uploadMode: "file",
+              sharePolicy: "readonly",
+              shareTargets: [],
+              bucketForm: { name: "", desc: "" },
+              pathForm: { name: "" },
+              shareFilter: { policy: "all", keyword: "" },
+              filters: { keyword: "" },
+              menus: [
+                { id: "dashboard", label: { zh: "总览", en: "Overview" } },
+                { id: "object", label: { zh: "对象存储", en: "Object Storage" } },
+                { id: "dataset", label: { zh: "数据集", en: "Datasets" } },
+                { id: "files", label: { zh: "文件存储", en: "File Storage" } }
+              ],
+              filterSchema: [
+                { key: "keyword", type: "input", label: { zh: "桶名称", en: "Bucket Name" }, placeholder: { zh: "搜索桶名称", en: "Search bucket name" } }
+              ],
+              uploadQueue: [],
+              buckets: [
+                {
+                  id: "b1",
+                  name: "ml-research-raw",
+                  desc: "训练数据、脚本和阶段性结果归档。",
+                  quota: "500 GB",
+                  used: "312 GB",
+                  usage: 62,
+                  objects: 12843,
+                  region: "华东-上海一",
+                  owner: "李瑞峰",
+                  createdAt: "2025-01-08 10:32",
+                  updatedAt: "2025-02-19 09:20",
+                  fileMap: {
+                    "/": [
+                      { name: "datasets", type: "folder", size: "-", modified: "2025-02-16 18:20", path: "/datasets" },
+                      { name: "train.py", type: "file", size: "2.1 MB", modified: "2025-02-17 09:12", path: "/train.py", shared: true },
+                      { name: "README.md", type: "file", size: "12 KB", modified: "2025-02-15 11:08", path: "/README.md", shared: false }
+                    ],
+                    "/datasets": [
+                      { name: "raw", type: "folder", size: "-", modified: "2025-02-16 18:20", path: "/datasets/raw" },
+                      { name: "labels.csv", type: "file", size: "14 MB", modified: "2025-02-16 17:03", path: "/datasets/labels.csv", shared: false }
+                    ],
+                    "/datasets/raw": [
+                      { name: "part-0001.parquet", type: "file", size: "86 MB", modified: "2025-02-16 18:11", path: "/datasets/raw/part-0001.parquet", shared: false }
+                    ]
+                  },
+                  tree: [
+                    { label: "datasets", path: "/datasets", type: "folder", children: [{ label: "raw", path: "/datasets/raw", type: "folder", children: [{ label: "part-0001.parquet", path: "/datasets/raw/part-0001.parquet", type: "file" }] }, { label: "labels.csv", path: "/datasets/labels.csv", type: "file" }] },
+                    { label: "train.py", path: "/train.py", type: "file" },
+                    { label: "README.md", path: "/README.md", type: "file" }
+                  ],
+                  shares: [{ name: "train.py", path: "/train.py", policy: "readonly", updatedAt: "2025-02-17 09:15" }]
+                },
+                {
+                  id: "b2",
+                  name: "project-artifacts",
+                  desc: "构建产物和评估日志集中存放。",
+                  quota: "不限",
+                  unlimited: true,
+                  used: "94 GB",
+                  usage: 0,
+                  objects: 2842,
+                  region: "华东-上海一",
+                  owner: "周辰",
+                  createdAt: "2025-02-03 14:26",
+                  updatedAt: "2025-02-18 10:12",
+                  fileMap: {
+                    "/": [
+                      { name: "build", type: "folder", size: "-", modified: "2025-02-18 10:12", path: "/build" },
+                      { name: "eval.json", type: "file", size: "420 KB", modified: "2025-02-18 10:03", path: "/eval.json", shared: true }
+                    ],
+                    "/build": [
+                      { name: "release-v1.2.tar", type: "file", size: "1.2 GB", modified: "2025-02-18 10:12", path: "/build/release-v1.2.tar", shared: false }
+                    ]
+                  },
+                  tree: [
+                    { label: "build", path: "/build", type: "folder", children: [{ label: "release-v1.2.tar", path: "/build/release-v1.2.tar", type: "file" }] },
+                    { label: "eval.json", path: "/eval.json", type: "file" }
+                  ],
+                  shares: [{ name: "eval.json", path: "/eval.json", policy: "readwrite", updatedAt: "2025-02-18 10:09" }]
+                },
+                {
+                  id: "b3",
+                  name: "model-checkpoints",
+                  desc: "模型权重和阶段检查点。",
+                  quota: "800 GB",
+                  used: "486 GB",
+                  usage: 61,
+                  objects: 621,
+                  region: "华东-上海一",
+                  owner: "王珂",
+                  createdAt: "2025-02-06 09:14",
+                  updatedAt: "2025-02-18 21:10",
+                  fileMap: { "/": [{ name: "epoch-12.ckpt", type: "file", size: "7.8 GB", modified: "2025-02-18 21:10", path: "/epoch-12.ckpt", shared: false }] },
+                  tree: [{ label: "epoch-12.ckpt", path: "/epoch-12.ckpt", type: "file" }],
+                  shares: []
+                },
+                {
+                  id: "b4",
+                  name: "feature-store-dev",
+                  desc: "特征工程中间产物与导出文件。",
+                  quota: "400 GB",
+                  used: "188 GB",
+                  usage: 47,
+                  objects: 9421,
+                  region: "华东-上海一",
+                  owner: "赵静",
+                  createdAt: "2025-02-09 16:42",
+                  updatedAt: "2025-02-18 08:20",
+                  fileMap: { "/": [{ name: "daily", type: "folder", size: "-", modified: "2025-02-18 08:16", path: "/daily" }] , "/daily": [{ name: "feature_20250218.csv", type: "file", size: "980 MB", modified: "2025-02-18 08:16", path: "/daily/feature_20250218.csv", shared: true }]},
+                  tree: [{ label: "daily", path: "/daily", type: "folder", children: [{ label: "feature_20250218.csv", path: "/daily/feature_20250218.csv", type: "file" }] }],
+                  shares: [{ name: "feature_20250218.csv", path: "/daily/feature_20250218.csv", policy: "readonly", updatedAt: "2025-02-18 08:20" }]
+                },
+                {
+                  id: "b5",
+                  name: "team-transfer-box",
+                  desc: "团队间结果交付与回传。",
+                  quota: "120 GB",
+                  used: "32 GB",
+                  usage: 27,
+                  objects: 164,
+                  region: "华东-上海一",
+                  owner: "陈昊",
+                  createdAt: "2025-02-11 13:08",
+                  updatedAt: "2025-02-18 15:30",
+                  fileMap: { "/": [{ name: "incoming", type: "folder", size: "-", modified: "2025-02-18 15:30", path: "/incoming" }, { name: "delivery.xlsx", type: "file", size: "3 MB", modified: "2025-02-18 12:01", path: "/delivery.xlsx", shared: true }], "/incoming": [] },
+                  tree: [{ label: "incoming", path: "/incoming", type: "folder", children: [] }, { label: "delivery.xlsx", path: "/delivery.xlsx", type: "file" }],
+                  shares: [{ name: "delivery.xlsx", path: "/delivery.xlsx", policy: "writeonly", updatedAt: "2025-02-18 12:10" }]
+                },
+                {
+                  id: "b6",
+                  name: "ops-scripts-backup",
+                  desc: "运维脚本与备份清单。",
+                  quota: "80 GB",
+                  used: "12 GB",
+                  usage: 15,
+                  objects: 339,
+                  region: "华东-上海一",
+                  owner: "运维组",
+                  createdAt: "2025-02-15 18:22",
+                  updatedAt: "2025-02-17 19:43",
+                  fileMap: { "/": [{ name: "cleanup.sh", type: "file", size: "18 KB", modified: "2025-02-17 19:43", path: "/cleanup.sh", shared: false }, { name: "backup", type: "folder", size: "-", modified: "2025-02-17 18:10", path: "/backup" }], "/backup": [{ name: "manifest.json", type: "file", size: "28 KB", modified: "2025-02-17 18:10", path: "/backup/manifest.json", shared: false }] },
+                  tree: [{ label: "cleanup.sh", path: "/cleanup.sh", type: "file" }, { label: "backup", path: "/backup", type: "folder", children: [{ label: "manifest.json", path: "/backup/manifest.json", type: "file" }] }],
+                  shares: []
+                }
+              ]
+            };
+          },
+          computed: {
+            activeBucket() { return this.buckets.find((b) => b.id === this.activeBucketId) || this.buckets[0]; },
+            visibleBuckets() {
+              let list = this.buckets.filter((b) => b.name.includes(this.filters.keyword || ""));
+              return list;
+            },
+            currentFiles() { return this.activeBucket.fileMap[this.currentPath] || []; },
+            crumbs() {
+              if (this.currentPath === "/") return [{ label: this.t("根目录", "Root"), path: "/" }];
+              const parts = this.currentPath.split("/").filter(Boolean);
+              let acc = "";
+              return [{ label: this.t("根目录", "Root"), path: "/" }].concat(parts.map((p) => ({ label: p, path: (acc += "/" + p) })));
+            },
+            filteredShares() {
+              return this.activeBucket.shares.filter((s) => (this.shareFilter.policy === "all" || s.policy === this.shareFilter.policy) && (!this.shareFilter.keyword || s.name.includes(this.shareFilter.keyword)));
+            },
+            shareTreeData() {
+              const walk = (nodes) => (nodes || []).map((node) => ({
+                ...node,
+                disabled: node.type === "folder",
+                children: walk(node.children)
+              }));
+              return walk(this.activeBucket.tree);
+            }
+          },
+          methods: {
+            t(zh, en) { return this.lang === "zh" ? zh : en; },
+            text(v) { return typeof v === "string" ? v : (this.lang === "zh" ? v.zh : v.en); },
+            hint(type) { ElMessage.success(type === "search" ? this.t("已按当前条件刷新结果。", "Results refreshed.") : this.t("已刷新。", "Refreshed.")); },
+            quotaDisplay(bucket) {
+              return bucket.unlimited ? this.t("不限", "Unlimited") : bucket.quota;
+            },
+            bucketUsageText(bucket) {
+              return bucket.unlimited ? this.t("不限", "Unlimited") : `${bucket.usage}%`;
+            },
+            bucketObjectText(value) {
+              return new Intl.NumberFormat(this.lang === "zh" ? "zh-CN" : "en-US").format(value || 0);
+            },
+            switchBucket(id) { this.activeBucketId = id; this.currentPath = "/"; this.tab = "files"; },
+            resetFilters() { this.filters = { keyword: "" }; },
+            goParent() {
+              if (this.currentPath === "/") return;
+              const parts = this.currentPath.split("/").filter(Boolean);
+              parts.pop();
+              this.currentPath = "/" + parts.join("/");
+              if (this.currentPath === "") this.currentPath = "/";
+            },
+            openRow(row) { if (row.type === "folder") this.currentPath = row.path; else ElMessage.success(this.t("已触发浏览器下载。", "Browser download triggered.")); },
+            openUpload(mode) {
+              this.uploadMode = mode;
+              this.uploadQueue = mode === "folder"
+                ? [{ name: "project-alpha/", state: this.t("待上传", "Pending") }, { name: "project-alpha/config.yaml", state: this.t("待上传", "Pending") }]
+                : [{ name: "new-result.csv", state: this.t("待上传", "Pending") }];
+              this.uploadDialog = true;
+            },
+            confirmUpload() {
+              const target = this.activeBucket.fileMap[this.currentPath] || [];
+              if (this.uploadMode === "folder") {
+                const name = "project-alpha";
+                target.unshift({ name, type: "folder", size: "-", modified: "2025-02-19 10:00", path: (this.currentPath === "/" ? "" : this.currentPath) + "/" + name });
+                this.activeBucket.fileMap[(this.currentPath === "/" ? "" : this.currentPath) + "/" + name] = [];
+              } else {
+                target.unshift({ name: "new-result.csv", type: "file", size: "6 MB", modified: "2025-02-19 10:00", path: (this.currentPath === "/" ? "" : this.currentPath) + "/new-result.csv", shared: false });
+              }
+              this.uploadDialog = false;
+              ElMessage.success(this.t("已模拟上传，保留上传文件和上传文件夹两种入口。", "Upload simulated with both file and folder flows preserved."));
+            },
+            createPath() {
+              if (!this.pathForm.name.trim()) return ElMessage.warning(this.t("请输入路径名称。", "Enter a path name."));
+              const path = (this.currentPath === "/" ? "" : this.currentPath) + "/" + this.pathForm.name.trim();
+              (this.activeBucket.fileMap[this.currentPath] || []).unshift({ name: this.pathForm.name.trim(), type: "folder", size: "-", modified: "2025-02-19 10:08", path });
+              this.activeBucket.fileMap[path] = [];
+              this.pathForm.name = "";
+              this.pathDialog = false;
+              ElMessage.success(this.t("路径已创建。", "Path created."));
+            },
+            validBucketName(v) {
+              return /^[a-z0-9.-]{3,63}$/.test(v) && !/\.\./.test(v) && !/(\.-|-\.)/.test(v) && !/^xn--/.test(v) && !/-s3alias$/.test(v) && !/^\d+\.\d+\.\d+\.\d+$/.test(v);
+            },
+            createBucket() {
+              const name = this.bucketForm.name.trim();
+              const desc = this.bucketForm.desc.trim() || this.t("新建桶，等待后续配置。", "New bucket awaiting setup.");
+              if (!this.validBucketName(name)) return ElMessage.warning(this.t("桶名称不符合规则。", "Bucket name is invalid."));
+              const item = { id: "b" + Date.now(), name, desc, quota: "200 GB", used: "0 GB", usage: 0, objects: 0, region: "华东-上海一", createdAt: "2025-02-19 10:10", fileMap: { "/": [] }, tree: [], shares: [] };
+              this.buckets.unshift(item);
+              this.activeBucketId = item.id;
+              this.currentPath = "/";
+              this.bucketForm = { name: "", desc: "" };
+              this.bucketDialog = false;
+              ElMessage.success(this.t("存储桶已创建。", "Bucket created."));
+            },
+            removeRow(row) {
+              ElMessageBox.confirm(this.t("删除后不可恢复，确认继续？", "Deletion is permanent. Continue?"), this.t("删除确认", "Confirm Delete"), { type: "warning" }).then(() => {
+                this.activeBucket.fileMap[this.currentPath] = this.currentFiles.filter((i) => i.path !== row.path);
+                if (row.type === "folder") Object.keys(this.activeBucket.fileMap).filter((k) => k.startsWith(row.path)).forEach((k) => delete this.activeBucket.fileMap[k]);
+                this.activeBucket.shares = this.activeBucket.shares.filter((s) => s.path !== row.path && !s.path.startsWith(row.path + "/"));
+                ElMessage.success(this.t("已模拟删除。", "Delete simulated."));
+              }).catch(() => {});
+            },
+            openShare(row) {
+              this.shareDialogMode = row && row.type === "file" ? "direct" : "picker";
+              this.shareTargets = row && row.type === "file" ? [row.path] : [];
+              this.sharePolicy = "readonly";
+              this.shareDialog = true;
+              this.$nextTick(() => {
+                const tree = this.$refs.shareTree;
+                if (tree) tree.setCheckedKeys(this.shareTargets);
+              });
+            },
+            editShare(row) {
+              this.shareDialogMode = "direct";
+              this.shareTargets = [row.path];
+              this.sharePolicy = row.policy;
+              this.shareDialog = true;
+              this.$nextTick(() => {
+                const tree = this.$refs.shareTree;
+                if (tree) tree.setCheckedKeys(this.shareTargets);
+              });
+            },
+            pickShare() {
+              const tree = this.$refs.shareTree;
+              this.shareTargets = tree ? tree.getCheckedKeys() : [];
+            },
+            saveShare() {
+              if (!this.shareTargets.length) return ElMessage.warning(this.t("请选择文件。", "Select files."));
+              this.shareTargets.forEach((path) => {
+                const name = path.split("/").pop();
+                const existed = this.activeBucket.shares.find((s) => s.path === path);
+                if (existed) {
+                  existed.policy = this.sharePolicy;
+                  existed.updatedAt = "2025-02-19 10:12";
+                } else {
+                  this.activeBucket.shares.unshift({ name, path, policy: this.sharePolicy, updatedAt: "2025-02-19 10:12" });
+                }
+                Object.values(this.activeBucket.fileMap).flat().forEach((f) => { if (f.path === path) f.shared = true; });
+              });
+              this.shareDialog = false;
+              ElMessage.success(this.t("共享策略已保存。", "Share policy saved."));
+            },
+            removeShare(row) {
+              ElMessageBox.confirm(this.t("删除共享策略后访问会立即失效，确认继续？", "Access becomes invalid immediately after share deletion. Continue?"), this.t("删除共享", "Delete Share"), { type: "warning" }).then(() => {
+                this.activeBucket.shares = this.activeBucket.shares.filter((s) => s.path !== row.path);
+                Object.values(this.activeBucket.fileMap).flat().forEach((f) => { if (f.path === row.path) f.shared = false; });
+                ElMessage.success(this.t("共享策略已删除。", "Share deleted."));
+              }).catch(() => {});
+            },
+            filePolicy(row) {
+              const item = this.activeBucket.shares.find((s) => s.path === row.path);
+              return item ? item.policy : "";
+            },
+            policyText(v) { return { readonly: this.t("只读", "Read Only"), writeonly: this.t("只写", "Write Only"), readwrite: this.t("读写", "Read & Write") }[v]; },
+            policyType(v) { return { readonly: "success", writeonly: "warning", readwrite: "danger" }[v] || "info"; }
+          }
+        }).use(ElementPlus).mount("#app");
+      })();
+    </script>
+  </body>
+</html>
+
+
+
