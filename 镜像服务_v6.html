@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>镜像服务原型 V1.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <style>
+      :root {
+        --smf-primary: #4c5df7;
+        --smf-primary-soft: #eef0ff;
+        --smf-page-bg: #f5f7fb;
+        --smf-card-bg: #ffffff;
+        --smf-border: #e5e7eb;
+        --smf-border-soft: #eef1f5;
+        --smf-text: #1f2328;
+        --smf-text-secondary: #667085;
+        --smf-text-tertiary: #98a2b3;
+        --smf-success: #12b76a;
+        --smf-warning: #f79009;
+        --smf-danger: #f04438;
+        --smf-info: #475467;
+        --smf-shadow-s1: 0 1px 2px rgba(16, 24, 40, 0.05);
+        --smf-shadow-s2: 0 4px 12px rgba(16, 24, 40, 0.08);
+        --smf-shadow-s4: 0 12px 32px rgba(16, 24, 40, 0.14);
+        --z-topbar: 200;
+        --z-sticky: 300;
+        --el-color-primary: #4c5df7;
+        --el-color-primary-light-9: #eef0ff;
+        --el-bg-color: #ffffff;
+        --el-bg-color-page: #f5f7fb;
+        --el-border-color: #e5e7eb;
+        --el-border-color-light: #eef1f5;
+        --el-text-color-primary: #1f2328;
+        --el-text-color-regular: #475467;
+        --el-text-color-secondary: #667085;
+        --el-fill-color-light: #f8f9fc;
+        --el-border-radius-base: 8px;
+      }
+
+      [v-cloak] {
+        display: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+        background: var(--smf-page-bg);
+        color: var(--smf-text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button:focus-visible,
+      [role="button"]:focus-visible,
+      a:focus-visible,
+      .el-input__wrapper:focus-within,
+      .el-select__wrapper:focus-within,
+      .el-textarea__inner:focus-visible {
+        outline: 2px solid var(--smf-primary);
+        outline-offset: 4px;
+      }
+
+      .fallback-shell {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        background: linear-gradient(180deg, #f6f7ff 0%, #f5f7fb 100%);
+      }
+
+      .fallback-card {
+        width: min(560px, 100%);
+        padding: 32px;
+        border-radius: 20px;
+        background: #ffffff;
+        border: 1px solid var(--smf-border);
+        box-shadow: var(--smf-shadow-s4);
+      }
+
+
+      .smf-shell-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border-bottom: 1px solid #ebeef5;
+        z-index: var(--z-topbar);
+      }
+
+      .smf-logo-block {
+        height: 52px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .smf-logo-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        background: linear-gradient(145deg, #4c5df7, #7388ff);
+        position: relative;
+      }
+
+      .smf-logo-mark::before,
+      .smf-logo-mark::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 999px;
+      }
+
+      .smf-logo-mark::before {
+        width: 16px;
+        height: 2px;
+        left: 6px;
+        top: 9px;
+      }
+
+      .smf-logo-mark::after {
+        width: 10px;
+        height: 2px;
+        left: 9px;
+        top: 16px;
+      }
+
+      .smf-logo-text {
+        font-size: 16px;
+        font-weight: 700;
+        color: #303133;
+      }
+
+      .smf-top-nav {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .smf-top-nav-btn {
+        height: 52px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: #606266;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .smf-top-nav-btn.active {
+        color: var(--smf-primary);
+        font-weight: 600;
+        border-bottom-color: var(--smf-primary);
+      }
+
+      .smf-header-right {
+        margin-left: auto;
+        height: 52px;
+        padding-right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .smf-head-link,
+      .smf-region-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #303133;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .smf-region-trigger {
+        cursor: pointer;
+      }
+
+      .smf-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #2563eb;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .smf-version {
+        font-size: 11px;
+        color: var(--smf-text-tertiary);
+      }
+
+      .smf-shell-body {
+        margin-top: 52px;
+        display: flex;
+        height: calc(100vh - 52px);
+      }
+
+      .smf-shell-side {
+        width: 200px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border-right: 1px solid #ebeef5;
+        overflow-y: auto;
+        padding: 12px 0;
+      }
+
+      .smf-side-group {
+        margin-bottom: 8px;
+      }
+
+      .smf-side-title {
+        margin: 0;
+        padding: 12px 0 8px 20px;
+        font-size: 12px;
+        color: #909399;
+        font-weight: 600;
+      }
+
+      .smf-side-item {
+        width: 100%;
+        height: 40px;
+        padding: 0 14px 0 20px;
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #303133;
+        cursor: pointer;
+        position: relative;
+        font-size: 14px;
+        text-align: left;
+      }
+
+      .smf-side-item.active {
+        background: #eef0ff;
+        color: var(--smf-primary);
+      }
+
+      .smf-side-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        background: var(--smf-primary);
+      }
+
+      .smf-side-icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .smf-shell-main {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        padding: 20px 28px;
+      }
+
+      .smf-card {
+        background: var(--smf-card-bg);
+        border: 1px solid var(--smf-border-soft);
+        border-radius: 12px;
+        box-shadow: var(--smf-shadow-s1);
+      }
+
+
+      .smf-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+      }
+
+      .mb-4 {
+        margin-bottom: 16px;
+      }
+
+      .justify-end {
+        justify-content: flex-end;
+      }
+
+      .smf-tab-box {
+        padding: 0 18px;
+      }
+
+      .smf-tab-box .el-tabs__header {
+        margin: 0;
+      }
+
+      .smf-tab-box .el-tabs__nav-wrap::after {
+        background: transparent;
+      }
+
+      .smf-tab-box .el-tabs__item {
+        height: 56px;
+        font-size: 14px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-tab-box .el-tabs__item.is-active {
+        color: var(--smf-primary);
+        font-weight: 600;
+      }
+
+      .smf-tab-label {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .smf-tab-badge {
+        display: none;
+      }
+
+      .smf-section {
+        margin-top: 16px;
+      }
+
+      .smf-project-rail {
+        padding: 0;
+      }
+
+      .smf-rail-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .smf-rail-head-main {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .smf-rail-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .smf-rail-hint {
+        margin: 4px 0 0;
+        color: var(--smf-text-secondary);
+        font-size: 13px;
+      }
+
+      .smf-project-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .smf-project-name {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--smf-text);
+      }
+
+      .smf-project-sub {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-kpi {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .smf-project-workspace {
+        display: grid;
+        grid-template-columns: 272px minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .smf-project-sidebar-panel {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: #ffffff;
+        align-self: start;
+        position: sticky;
+        top: 0;
+      }
+
+      .smf-project-search {
+        margin-bottom: 12px;
+      }
+
+      .smf-project-toolbar {
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      .smf-project-toolbar .el-button {
+        width: 100%;
+      }
+
+      .smf-project-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef4ff;
+        color: #3551d8;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .smf-project-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: min(620px, calc(100vh - 248px));
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .smf-project-list-item {
+        width: 100%;
+        border: 1px solid #dbe4f1;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+      }
+
+      .smf-project-list-item:hover {
+        border-color: #b8c8ef;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      .smf-project-list-item.active {
+        border-color: rgba(76, 93, 247, 0.38);
+        background: linear-gradient(180deg, #fbfcff 0%, #f2f6ff 100%);
+        box-shadow: 0 0 0 3px rgba(76, 93, 247, 0.08);
+      }
+
+      .smf-project-list-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .smf-project-list-side {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        flex: none;
+      }
+
+      .smf-project-list-foot {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .smf-project-list-id {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+        line-height: 1.4;
+      }
+
+      .smf-project-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-state-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #4c5df7;
+        flex: none;
+      }
+
+      .smf-project-usage {
+        margin-top: 12px;
+      }
+
+      .smf-project-usage-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-usage-value {
+        font-weight: 600;
+        color: var(--smf-text);
+      }
+
+
+      .smf-project-list-meta {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .smf-project-meta-block {
+        min-width: 0;
+      }
+
+      .smf-project-meta-label {
+        font-size: 11px;
+        color: var(--smf-text-tertiary);
+      }
+
+      .smf-project-meta-value {
+        margin-top: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--smf-text);
+        word-break: break-word;
+      }
+
+      .smf-project-stage {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .smf-selected-project {
+        padding: 16px;
+        border: 1px solid #dbe4f1;
+        background: #ffffff;
+      }
+
+      .smf-selected-project-detail {
+        padding-top: 8px;
+      }
+
+      .smf-selected-project-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .smf-selected-project-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+      }
+
+      .smf-selected-project-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .smf-project-hero {
+        padding: 0;
+        background: transparent;
+      }
+
+      .smf-project-hero-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--smf-text);
+      }
+
+      .smf-project-hero-desc {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-overview-meta {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        color: #475569;
+      }
+
+      .smf-project-overview-shell {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) 144px; grid-template-areas: "main stats";
+        gap: 8px;
+        align-items: stretch;
+      }
+
+      .smf-project-panel {
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid #e5ecf5;
+        background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        height: 100%;
+      }
+
+      .smf-project-overview-stats {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 144px;
+        justify-self: end;
+      }
+
+      .smf-project-panel-value-row {
+        margin-top: 6px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .smf-project-usage-inline {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--smf-text-secondary);
+        white-space: nowrap;
+      }
+
+      .smf-project-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .smf-project-usage-corner {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--smf-text);
+        white-space: nowrap;
+      }
+
+      .smf-project-mini-stat {
+        padding: 10px 12px;
+      }
+
+      .smf-project-mini-stat-value {
+        margin-top: 6px;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+
+      .smf-project-usage-track {
+        position: relative;
+        margin-top: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #e7edf6;
+        overflow: hidden;
+      }
+
+      .smf-project-usage-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #4c5df7 0%, #7e8bff 100%);
+      }
+
+      .smf-project-panel-label {
+        font-size: 11px;
+        color: var(--smf-text-tertiary);
+      }
+
+      .smf-project-panel-value {
+        margin-top: 4px;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--smf-text);
+      }
+
+      .smf-project-panel-sub {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-metric-row {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .smf-project-mini-stat {
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #edf2f7;
+        min-width: 0;
+      }
+
+      .smf-project-mini-stat-value {
+        margin-top: 4px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--smf-text);
+      }
+
+      .smf-project-mini-stat-sub {
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-latest-name {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: var(--smf-text);
+        word-break: break-word;
+      }
+
+      .smf-project-latest-desc {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-latest-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .smf-project-latest-stat {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #edf2f7;
+      }
+
+      .smf-project-latest-stat-value {
+        margin-top: 5px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--smf-text);
+        line-height: 1.35;
+        word-break: break-word;
+      }
+
+      .smf-project-latest-meta {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-project-latest-tags {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .smf-project-latest-actions {
+        margin-top: auto;
+        padding-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .smf-mini-kpi,
+      .smf-summary-card,
+      .smf-overview-card {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f8f9fc;
+      }
+
+      .smf-mini-kpi-label,
+      .smf-summary-title,
+      .smf-overview-label {
+        font-size: 11px;
+        color: var(--smf-text-tertiary);
+      }
+
+      .smf-mini-kpi-value,
+      .smf-overview-value {
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--smf-text);
+      }
+
+      .smf-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .smf-summary-card {
+        border: 1px solid var(--smf-border);
+        background: linear-gradient(180deg, #ffffff 0%, #f9faff 100%);
+      }
+
+      .smf-summary-value {
+        margin-top: 8px;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--smf-text);
+      }
+
+      .smf-summary-meta {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-filter-box {
+        margin-top: 16px;
+        padding: 0;
+      }
+
+      .smf-filter-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .smf-filter-main-row {
+        flex-wrap: nowrap;
+      }
+
+      .smf-filter-item {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--smf-border);
+        border-radius: 8px;
+        background: transparent;
+        min-width: 0;
+      }
+
+      .smf-filter-item:focus-within {
+        border-color: var(--smf-primary);
+        box-shadow: 0 0 0 2px rgba(76, 93, 247, 0.08);
+      }
+
+      .smf-filter-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        padding: 0 12px;
+        background: #f6f8fb;
+        border-right: 1px solid var(--smf-border);
+        border-radius: 8px 0 0 8px;
+        color: var(--smf-text-secondary);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .smf-filter-control {
+        min-width: 120px;
+      }
+
+      .smf-filter-control .el-input__wrapper,
+      .smf-filter-control .el-select__wrapper,
+      .smf-filter-control .el-date-editor.el-input__wrapper {
+        min-height: 32px;
+        border-radius: 0 8px 8px 0;
+        box-shadow: none;
+      }
+
+      .smf-filter-control .el-input__wrapper,
+      .smf-filter-control .el-select__wrapper,
+      .smf-filter-control .el-date-editor {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .smf-filter-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        white-space: nowrap;
+      }
+
+      .smf-filter-actions .el-button {
+        height: 32px;
+        border-radius: 8px;
+      }
+
+      .smf-filter-toggle-btn {
+        padding: 0;
+      }
+
+      .smf-filter-toggle-btn .el-icon {
+        margin-right: 4px;
+      }
+
+      .smf-expand-enter-active,
+      .smf-expand-leave-active {
+        transition: all 0.18s ease;
+      }
+
+      .smf-expand-enter-from,
+      .smf-expand-leave-to {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+
+      .smf-table-wrap {
+        margin-top: 16px;
+        padding: 16px 16px 8px;
+      }
+
+      .smf-tag-group {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 6px;
+      }
+
+      .smf-scene-token {
+        display: inline-flex;
+        align-items: center;
+        max-width: 160px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid #dbe4f1;
+        color: var(--smf-text);
+        font-size: 12px;
+        line-height: 20px;
+        white-space: nowrap;
+      }
+
+      .smf-tag-overflow-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border: 1px dashed #c7d2fe;
+        background: #eef2ff;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      }
+
+      .smf-tag-overflow-trigger:hover,
+      .smf-tag-overflow-trigger:focus-visible {
+        border-color: #93c5fd;
+        background: #dbeafe;
+        color: #0f172a;
+      }
+
+      .smf-tag-popover {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 160px;
+      }
+
+      .smf-tag-popover-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--smf-text);
+        font-size: 13px;
+      }
+
+      .smf-tag-popover-item .smf-scene-token {
+        max-width: none;
+      }
+
+      .smf-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+
+      .smf-table-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .smf-table-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--smf-text);
+      }
+
+      .smf-table-note {
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-table {
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .smf-table .el-table__header-wrapper th {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        background: #fafbfc;
+      }
+
+      .smf-table .el-table__row td:first-child {
+        position: relative;
+      }
+
+      .smf-table .el-table__row:hover td:first-child::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 3px;
+        background: var(--smf-primary);
+        border-radius: 999px;
+      }
+
+      .smf-name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .smf-name-main {
+        color: var(--smf-text);
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .smf-name-sub {
+        font-size: 12px;
+        color: var(--smf-text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+
+      .smf-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+
+      .smf-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+      }
+
+      .smf-status-success {
+        color: var(--smf-success);
+      }
+
+      .smf-status-success .smf-status-dot {
+        background: var(--smf-success);
+      }
+
+      .smf-status-warning {
+        color: var(--smf-warning);
+      }
+
+      .smf-status-warning .smf-status-dot {
+        background: var(--smf-warning);
+      }
+
+      .smf-status-danger {
+        color: var(--smf-danger);
+      }
+
+      .smf-status-danger .smf-status-dot {
+        background: var(--smf-danger);
+      }
+
+      .smf-status-info {
+        color: var(--smf-info);
+      }
+
+      .smf-status-info .smf-status-dot {
+        background: var(--smf-info);
+      }
+
+      .smf-pager {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .smf-pager .el-pagination {
+        --el-pagination-button-height: 32px;
+        --el-pagination-button-width: 32px;
+      }
+
+      .smf-pager .el-pagination.is-background .btn-prev,
+      .smf-pager .el-pagination.is-background .btn-next,
+      .smf-pager .el-pagination.is-background .el-pager li {
+        background: #f2f4f7;
+        border-radius: 8px;
+      }
+
+      .smf-pager .el-pagination.is-background .el-pager li.is-active {
+        background: var(--smf-primary);
+      }
+
+      .smf-skeleton-card {
+        padding: 18px;
+      }
+
+      .smf-detail-drawer .el-drawer__header {
+        margin-bottom: 10px;
+        padding-bottom: 0;
+      }
+
+      .smf-detail-drawer .el-drawer__body {
+        padding-top: 0;
+      }
+
+      .smf-drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .smf-drawer-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .smf-drawer-sub {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-overview-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .smf-overview-card {
+        border: 1px solid #e8ebff;
+        background: #f8faff;
+      }
+
+      .smf-code-block {
+        margin-top: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: #111827;
+        color: #f8fafc;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+
+      .smf-dialog-note,
+      .smf-form-help,
+      .smf-muted {
+        color: var(--smf-text-secondary);
+      }
+
+      .smf-dialog-note,
+      .smf-form-help {
+        margin-top: 8px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 1320px) {
+        .smf-summary-grid,
+        .smf-overview-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .smf-project-workspace {
+          grid-template-columns: 248px minmax(0, 1fr);
+        }
+
+        .smf-project-overview-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .smf-project-latest-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .smf-shell-side {
+          display: none;
+        }
+
+        .smf-shell-main {
+          padding: 16px;
+        }
+
+        .smf-filter-main-row,
+        .smf-header-actions {
+          flex-wrap: wrap;
+        }
+
+        .smf-summary-grid,
+        .smf-overview-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .smf-project-workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .smf-project-sidebar-panel {
+          position: static;
+        }
+
+        .smf-selected-project-head,
+        .smf-selected-project-actions {
+          flex-wrap: wrap;
+        }
+
+        .smf-project-toolbar,
+        .smf-project-list-head {
+          flex-wrap: wrap;
+        }
+
+        .smf-project-list-meta,
+        .smf-project-metric-row,
+        .smf-project-latest-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script>
+      (() => {
+        const appRoot = document.getElementById("app");
+        if (!window.Vue || !window.ElementPlus || !window.ElementPlusIconsVue) {
+          appRoot.innerHTML = `
+            <div class="fallback-shell">
+              <div class="fallback-card">
+                <h2 style="margin:0 0 12px;font-size:24px;color:#1f2328;">依赖加载失败 / Failed to Load Dependencies</h2>
+                <p style="margin:0;color:#667085;line-height:1.7;">
+                  请检查网络连接后刷新页面，确保 Vue 3、Element Plus、Element Plus Icons 与 Tailwind CDN 可访问。
+                </p>
+              </div>
+            </div>
+          `;
+          console.error("CDN dependencies failed to load.");
+          return;
+        }
+
+        const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+        const { ElMessage, ElMessageBox } = ElementPlus;
+
+        const cloneValue = (value) => {
+          if (Array.isArray(value)) return [...value];
+          if (value && typeof value === "object") return JSON.parse(JSON.stringify(value));
+          return value;
+        };
+
+        const toDateValue = (value) => {
+          if (!value) return null;
+          if (typeof value === "number") return value;
+          return new Date(String(value).replace(/-/g, "/")).getTime();
+        };
+
+        const matchesDateRange = (value, range) => {
+          if (!Array.isArray(range) || range.length !== 2 || !range[0] || !range[1]) return true;
+          const current = toDateValue(value);
+          const start = toDateValue(`${range[0]} 00:00:00`);
+          const end = toDateValue(`${range[1]} 23:59:59`);
+          if (!current || !start || !end) return true;
+          return current >= start && current <= end;
+        };
+
+        const formatTimestamp = (value) => {
+          if (!value) return "-";
+          const date = new Date(Number(value));
+          const pad = (num) => String(num).padStart(2, "0");
+          return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+            date.getHours()
+          )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        };
+
+        const summarizeQuota = (used, total) => `${used} / ${total}`;
+        const parseStorageToGb = (value) => {
+          const match = String(value || "").trim().match(/^([\d.]+)\s*(MB|GB|TB)$/i);
+          if (!match) return 0;
+          const amount = Number(match[1]);
+          const unit = match[2].toUpperCase();
+          if (unit === "TB") return amount * 1024;
+          if (unit === "MB") return amount / 1024;
+          return amount;
+        };
+        const quotaPercent = (used, total) => {
+          const totalGb = parseStorageToGb(total);
+          if (!totalGb) return 0;
+          return Math.max(0, Math.min(100, Math.round((parseStorageToGb(used) / totalGb) * 100)));
+        };
+        const imageVersionCount = (image) => (image && image.versions ? image.versions.length : 0);
+        const projectVersionCount = (project) => (project && project.images ? project.images.reduce((sum, item) => sum + (item.versions ? item.versions.length : 0), 0) : 0);
+        const tagCatalog = [
+          "Training",
+          "Inference",
+          "Container-Instance",
+          "IDE-JupyterLab",
+          "IDE-CodeServer",
+          "IDE-JupyterCoder",
+          "Ray"
+        ];
+        const visibilityCatalog = [
+          { value: "private", zh: "私有", en: "Private" },
+          { value: "public", zh: "公开", en: "Public" }
+        ];
+        const architectureCatalog = ["amd64", "arm64"];
+        const pushStatusMeta = {
+          committing: { zh: "创建中", en: "Committing", className: "warning" },
+          pending: { zh: "待推送", en: "Queued", className: "info" },
+          pushing: { zh: "推送中", en: "Pushing", className: "warning" },
+          completed: { zh: "推送完成", en: "Completed", className: "success" },
+          commitError: { zh: "创建错误", en: "Commit Error", className: "danger" },
+          pushError: { zh: "推送错误", en: "Push Error", className: "danger" },
+          deleting: { zh: "删除中", en: "Deleting", className: "info" }
+        };
+        const projectImageExtraImages = [
+          {
+            id: "img-opencv",
+            name: "opencv-gpu-runtime",
+            description: "Computer vision runtime with CUDA acceleration and OpenCV toolchain",
+            tags: ["Inference", "Container-Instance", "IDE-JupyterLab", "Training", "Ray", "IDE-CodeServer"],
+            latestVersion: "v3.1",
+            architecture: "amd64",
+            size: "3.48 GB",
+            updatedAt: "2025-11-22 10:18:33",
+            versions: [
+              {
+                id: "img-opencv-v31",
+                version: "v3.1",
+                size: "3.48 GB",
+                architecture: "amd64",
+                digest: "sha256:92a7e11a10d42dba4f1d2361478b31f695d0c450ded3fb425e42c692c2833201",
+                savedAt: "2025-11-22 10:18:33"
+              },
+              {
+                id: "img-opencv-v30",
+                version: "v3.0",
+                size: "3.36 GB",
+                architecture: "amd64",
+                digest: "sha256:1b1d7df2d2d66f823b33f49a02d9f33c48597f3d242ab3d84e25d5e80635a7db",
+                savedAt: "2025-11-12 16:20:11"
+              }
+            ]
+          },
+          {
+            id: "img-jupyterlab",
+            name: "jupyterlab-ds-stack",
+            description: "Notebook image with common data science libraries and JupyterLab presets",
+            tags: ["IDE-JupyterLab", "Training"],
+            latestVersion: "v5",
+            architecture: "amd64",
+            size: "5.24 GB",
+            updatedAt: "2025-11-21 18:42:06",
+            versions: [
+              {
+                id: "img-jupyterlab-v5",
+                version: "v5",
+                size: "5.24 GB",
+                architecture: "amd64",
+                digest: "sha256:4248355ab0f5d95d48279444daafebd3486916300a3f73f2da6e5be7666a739b",
+                savedAt: "2025-11-21 18:42:06"
+              }
+            ]
+          },
+          {
+            id: "img-codeserver",
+            name: "codeserver-dev-base",
+            description: "CodeServer development image for lightweight online coding sessions",
+            tags: ["IDE-CodeServer"],
+            latestVersion: "v2.3",
+            architecture: "amd64",
+            size: "3.92 GB",
+            updatedAt: "2025-11-20 09:17:42",
+            versions: [
+              {
+                id: "img-codeserver-v23",
+                version: "v2.3",
+                size: "3.92 GB",
+                architecture: "amd64",
+                digest: "sha256:67756e54118fd3216d49d5093ef0f2b898abda772f865dcc46e5074f824b44c2",
+                savedAt: "2025-11-20 09:17:42"
+              }
+            ]
+          },
+          {
+            id: "img-onnx",
+            name: "onnxruntime-cu121",
+            description: "ONNX Runtime image for GPU inference acceleration and service deployment",
+            tags: ["Inference"],
+            latestVersion: "v4",
+            architecture: "amd64",
+            size: "4.86 GB",
+            updatedAt: "2025-11-20 08:11:15",
+            versions: [
+              {
+                id: "img-onnx-v4",
+                version: "v4",
+                size: "4.86 GB",
+                architecture: "amd64",
+                digest: "sha256:c5e1b2e0f1d1cb5ffcb616a0145dfae934f4f4c7bca3ccbc06ef4f70c4dd72fb",
+                savedAt: "2025-11-20 08:11:15"
+              }
+            ]
+          },
+          {
+            id: "img-spark",
+            name: "spark-analytics-runtime",
+            description: "Distributed analytics image for Spark-based ETL and batch jobs",
+            tags: ["Training", "Container-Instance"],
+            latestVersion: "v2",
+            architecture: "amd64",
+            size: "6.18 GB",
+            updatedAt: "2025-11-19 17:03:51",
+            versions: [
+              {
+                id: "img-spark-v2",
+                version: "v2",
+                size: "6.18 GB",
+                architecture: "amd64",
+                digest: "sha256:98bbf4f3fb7301ff903dd7ec4142348de7a4d611eb69f5fd4a9f6849d24baf5f",
+                savedAt: "2025-11-19 17:03:51"
+              }
+            ]
+          },
+          {
+            id: "img-vllm",
+            name: "vllm-serving-cu122",
+            description: "Large model serving image tuned for high-throughput inference",
+            tags: ["Inference"],
+            latestVersion: "v1.8",
+            architecture: "amd64",
+            size: "7.42 GB",
+            updatedAt: "2025-11-18 21:26:19",
+            versions: [
+              {
+                id: "img-vllm-v18",
+                version: "v1.8",
+                size: "7.42 GB",
+                architecture: "amd64",
+                digest: "sha256:7ce7c18b3258a2fc3d1f4bf5e6ac2be2db420c359486af53fcdf9b1c49083014",
+                savedAt: "2025-11-18 21:26:19"
+              }
+            ]
+          },
+          {
+            id: "img-fastapi",
+            name: "fastapi-serving-base",
+            description: "API service base image for internal model gateway and app backends",
+            tags: ["Container-Instance", "Inference"],
+            latestVersion: "v6",
+            architecture: "amd64",
+            size: "2.94 GB",
+            updatedAt: "2025-11-18 10:44:05",
+            versions: [
+              {
+                id: "img-fastapi-v6",
+                version: "v6",
+                size: "2.94 GB",
+                architecture: "amd64",
+                digest: "sha256:b2577a320b62cc4d7e0233eeb0b267fdb246df057ccdf0fd838aa94fb1a8dc8d",
+                savedAt: "2025-11-18 10:44:05"
+              }
+            ]
+          },
+          {
+            id: "img-nemo",
+            name: "nemo-train-cu122",
+            description: "Speech and multimodal training image with NeMo dependency stack",
+            tags: ["Training"],
+            latestVersion: "v2.2",
+            architecture: "amd64",
+            size: "8.36 GB",
+            updatedAt: "2025-11-17 14:33:24",
+            versions: [
+              {
+                id: "img-nemo-v22",
+                version: "v2.2",
+                size: "8.36 GB",
+                architecture: "amd64",
+                digest: "sha256:4a8a34bc6c796178409b7af84cdcb66dfd99e449dbcf13fc3a579b95a61a4c03",
+                savedAt: "2025-11-17 14:33:24"
+              }
+            ]
+          },
+          {
+            id: "img-mlflow",
+            name: "mlflow-tracking-base",
+            description: "Tracking and experiment management image for MLFlow services",
+            tags: ["Container-Instance"],
+            latestVersion: "v3",
+            architecture: "amd64",
+            size: "2.56 GB",
+            updatedAt: "2025-11-16 20:08:47",
+            versions: [
+              {
+                id: "img-mlflow-v3",
+                version: "v3",
+                size: "2.56 GB",
+                architecture: "amd64",
+                digest: "sha256:cbbf32d35af15f98bd6bc63b7fbf3c5a3d9f43111c0cc6cfc89ab2c85a2b98dc",
+                savedAt: "2025-11-16 20:08:47"
+              }
+            ]
+          },
+          {
+            id: "img-audio",
+            name: "audio-preprocess-runtime",
+            description: "Audio preprocessing image for feature extraction and dataset alignment",
+            tags: ["Training", "Container-Instance"],
+            latestVersion: "v1.4",
+            architecture: "arm64",
+            size: "3.12 GB",
+            updatedAt: "2025-11-15 09:25:36",
+            versions: [
+              {
+                id: "img-audio-v14",
+                version: "v1.4",
+                size: "3.12 GB",
+                architecture: "arm64",
+                digest: "sha256:a7440ef25f49691a44566233410cfad6320d7b88e2113b11d392f745c0bdcc3f",
+                savedAt: "2025-11-15 09:25:36"
+              }
+            ]
+          },
+          {
+            id: "img-feature",
+            name: "feature-store-tools",
+            description: "Tooling image for feature sync, materialization and offline validation",
+            tags: ["Container-Instance"],
+            latestVersion: "v2.1",
+            architecture: "amd64",
+            size: "2.48 GB",
+            updatedAt: "2025-11-14 16:42:29",
+            versions: [
+              {
+                id: "img-feature-v21",
+                version: "v2.1",
+                size: "2.48 GB",
+                architecture: "amd64",
+                digest: "sha256:c803dcff768b3ca9514b5df6a0419ddcdd0ba4f51f6352fcb3eb0cbdbdf98559",
+                savedAt: "2025-11-14 16:42:29"
+              }
+            ]
+          },
+          {
+            id: "img-paddle",
+            name: "paddleocr-runtime",
+            description: "OCR inference image with PaddleOCR and common document preprocessors",
+            tags: ["Inference", "IDE-JupyterLab"],
+            latestVersion: "v3.6",
+            architecture: "amd64",
+            size: "4.04 GB",
+            updatedAt: "2025-11-13 12:03:18",
+            versions: [
+              {
+                id: "img-paddle-v36",
+                version: "v3.6",
+                size: "4.04 GB",
+                architecture: "amd64",
+                digest: "sha256:7fd8f5afda6c6d2a88ae5ad2d2370bdf8d95cc14c4ab1b149149389f6327a870",
+                savedAt: "2025-11-13 12:03:18"
+              }
+            ]
+          },
+          {
+            id: "img-kserve",
+            name: "kserve-model-gateway",
+            description: "Gateway image for KServe-based model ingress and traffic control",
+            tags: ["Inference", "Container-Instance"],
+            latestVersion: "v1.1",
+            architecture: "amd64",
+            size: "3.76 GB",
+            updatedAt: "2025-11-12 11:28:44",
+            versions: [
+              {
+                id: "img-kserve-v11",
+                version: "v1.1",
+                size: "3.76 GB",
+                architecture: "amd64",
+                digest: "sha256:682c42deaece9eb8ac07133cf2428bda75d796a2a8c9fb8bb37ba5ffcae37788",
+                savedAt: "2025-11-12 11:28:44"
+              }
+            ]
+          }
+        ];
+
+        const myProjects = ref([
+          {
+            id: "project-image",
+            name: "project-image",
+            description: "用于沉淀训练、推理与开发场景下的基础运行环境镜像。",
+            region: "华东-上海一",
+            createdBy: "张晨",
+            visibility: "private",
+            imageCount: 15,
+            usageRate: 7.7,
+            quotaUsed: "77.02 GB",
+            quotaTotal: "1 TB",
+            createdAt: "2025-11-06 11:41:09",
+            updatedAt: "2025-11-22 10:18:33",
+            images: [
+              {
+                id: "img-tf",
+                name: "cuda122-cudnn8-tensorflow",
+                description: "TensorFlow 2.16 runtime for inference and container instances",
+                tags: ["Inference", "Container-Instance"],
+                latestVersion: "v1",
+                architecture: "amd64",
+                size: "6.28 GB",
+                updatedAt: "2025-11-14 09:50:43",
+                versions: [
+                  {
+                    id: "img-tf-v1",
+                    version: "v1",
+                    size: "6.28 GB",
+                    architecture: "amd64",
+                    digest: "sha256:4dd365c03b0017d63b2af6f2c6127f2f8a4a9c1ea2c601dcb6d8f60ea3c201ab",
+                    savedAt: "2025-11-14 09:50:43"
+                  }
+                ]
+              },
+              {
+                id: "img-pt",
+                name: "cuda122-cudnn8-pytorch",
+                description: "PyTorch 2.4 image for development and training",
+                tags: ["Training", "IDE-CodeServer"],
+                latestVersion: "v2.0",
+                architecture: "amd64",
+                size: "6.96 GB",
+                updatedAt: "2025-11-16 13:12:10",
+                versions: [
+                  {
+                    id: "img-pt-v2",
+                    version: "v2.0",
+                    size: "6.96 GB",
+                    architecture: "amd64",
+                    digest: "sha256:6f8c8721c59f41df4fdf570f09ba4d7119c3bb4bfb8b9acb1f80ff70d4b4a881",
+                    savedAt: "2025-11-16 13:12:10"
+                  },
+                  {
+                    id: "img-pt-v1",
+                    version: "v1.6",
+                    size: "6.52 GB",
+                    architecture: "amd64",
+                    digest: "sha256:4bc208dd82e5728afc2099076695fdcf58b03c5bbdca6fe9dff90f28ff39bd65",
+                    savedAt: "2025-11-04 11:40:12"
+                  }
+                ]
+              },
+              ...projectImageExtraImages
+            ]
+          },
+          {
+            id: "project-4b619w",
+            name: "project-4b619w",
+            description: "预留给对象存储同步任务的轻量镜像项目。",
+            region: "华东-上海一",
+            createdBy: "李扬",
+            visibility: "private",
+            imageCount: 0,
+            usageRate: 0,
+            quotaUsed: "0 GB",
+            quotaTotal: "1 TB",
+            createdAt: "2025-11-01 10:22:08",
+            updatedAt: "2025-11-01 10:22:08",
+            images: []
+          },
+          {
+            id: "project-a7m31k",
+            name: "project-a7m31k",
+            description: "面向数据传输与工具镜像的公共基础项目。",
+            region: "华东-上海一",
+            createdBy: "周宁",
+            visibility: "private",
+            imageCount: 1,
+            usageRate: 0.43,
+            quotaUsed: "2.14 GB",
+            quotaTotal: "500 GB",
+            createdAt: "2025-11-02 14:18:12",
+            updatedAt: "2025-11-13 19:26:08",
+            images: [
+              {
+                id: "img-minio",
+                name: "minio-client-runtime",
+                description: "Utility image for object storage sync and lightweight transfer jobs",
+                tags: ["Container-Instance"],
+                latestVersion: "v1.2",
+                architecture: "amd64",
+                size: "2.14 GB",
+                updatedAt: "2025-11-13 19:26:08",
+                versions: [
+                  {
+                    id: "img-minio-v12",
+                    version: "v1.2",
+                    size: "2.14 GB",
+                    architecture: "amd64",
+                    digest: "sha256:3387e01a3ac7017f53c3302ec8b6b8db7ecfe53d42e1821d03a29aaf018ec691",
+                    savedAt: "2025-11-13 19:26:08"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "project-h2d08p",
+            name: "project-h2d08p",
+            description: "聚焦推理服务与在线部署场景的 GPU 镜像项目。",
+            region: "华东-上海一",
+            createdBy: "王珂",
+            visibility: "private",
+            imageCount: 2,
+            usageRate: 0.98,
+            quotaUsed: "9.82 GB",
+            quotaTotal: "1 TB",
+            createdAt: "2025-11-03 08:43:51",
+            updatedAt: "2025-11-17 10:02:30",
+            images: [
+              {
+                id: "img-triton",
+                name: "triton-serving-cu122",
+                description: "Triton runtime for multi-model GPU inference services",
+                tags: ["Inference"],
+                latestVersion: "v5",
+                architecture: "amd64",
+                size: "7.10 GB",
+                updatedAt: "2025-11-17 10:02:30",
+                versions: [
+                  {
+                    id: "img-triton-v5",
+                    version: "v5",
+                    size: "7.10 GB",
+                    architecture: "amd64",
+                    digest: "sha256:0c48a78bf0af640dcbcc0843a685ecb8eb1bc50786236dc41d0cc641c86b3c12",
+                    savedAt: "2025-11-17 10:02:30"
+                  }
+                ]
+              },
+              {
+                id: "img-gradio",
+                name: "gradio-app-runtime",
+                description: "Application runtime for quick internal demos and preview services",
+                tags: ["IDE-JupyterLab", "Inference"],
+                latestVersion: "v2",
+                architecture: "amd64",
+                size: "2.72 GB",
+                updatedAt: "2025-11-15 15:16:06",
+                versions: [
+                  {
+                    id: "img-gradio-v2",
+                    version: "v2",
+                    size: "2.72 GB",
+                    architecture: "amd64",
+                    digest: "sha256:05d671cf5441fa97242a3743f4d73f1a88544626ebf3af1f3b1cf99d3bd75854",
+                    savedAt: "2025-11-15 15:16:06"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "project-r6x44q",
+            name: "project-r6x44q",
+            visibility: "private",
+            imageCount: 1,
+            quotaUsed: "4.36 GB",
+            quotaTotal: "500 GB",
+            createdAt: "2025-11-05 16:30:19",
+            updatedAt: "2025-11-19 08:44:11",
+            images: [
+              {
+                id: "img-llm",
+                name: "llm-eval-runtime",
+                description: "Evaluation image with benchmark toolchain and notebook presets",
+                tags: ["Training", "IDE-JupyterLab"],
+                latestVersion: "v4",
+                architecture: "arm64",
+                size: "4.36 GB",
+                updatedAt: "2025-11-19 08:44:11",
+                versions: [
+                  {
+                    id: "img-llm-v4",
+                    version: "v4",
+                    size: "4.36 GB",
+                    architecture: "arm64",
+                    digest: "sha256:4af3fc99d788efce72a2072f1d7c8947dc5ae0b0a9f3d1e4ef637617a6daec4f",
+                    savedAt: "2025-11-19 08:44:11"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "project-o9gh2n",
+            name: "project-o9gh2n",
+            visibility: "private",
+            imageCount: 2,
+            quotaUsed: "13.56 GB",
+            quotaTotal: "1 TB",
+            createdAt: "2025-10-28 18:08:15",
+            updatedAt: "2025-11-18 17:26:54",
+            images: [
+              {
+                id: "img-ray",
+                name: "ray-2.35-cu122",
+                description: "Distributed runtime for large-scale training and Ray clusters",
+                tags: ["Training", "Ray"],
+                latestVersion: "r2",
+                architecture: "amd64",
+                size: "8.04 GB",
+                updatedAt: "2025-11-18 17:26:54",
+                versions: [
+                  {
+                    id: "img-ray-r2",
+                    version: "r2",
+                    size: "8.04 GB",
+                    architecture: "amd64",
+                    digest: "sha256:9e2c8c6838df0d753fe7abf62b1eed2db6c0b63a0af8fb85cc0bb33dd33673ac",
+                    savedAt: "2025-11-18 17:26:54"
+                  }
+                ]
+              },
+              {
+                id: "img-jc",
+                name: "jupytercoder-svd3",
+                description: "Lightweight coding image for JupyterCoder sessions",
+                tags: ["IDE-JupyterCoder", "Inference"],
+                latestVersion: "v3",
+                architecture: "amd64",
+                size: "5.52 GB",
+                updatedAt: "2025-11-04 11:40:12",
+                versions: [
+                  {
+                    id: "img-jc-v3",
+                    version: "v3",
+                    size: "5.52 GB",
+                    architecture: "amd64",
+                    digest: "sha256:48e88f945d06cbe36e34a49a6ed3bfa55bca149932c3042fb19e62cba2b8a3f3",
+                    savedAt: "2025-11-04 11:40:12"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "project-z8n92t",
+            name: "project-z8n92t",
+            visibility: "private",
+            imageCount: 0,
+            quotaUsed: "0 GB",
+            quotaTotal: "500 GB",
+            createdAt: "2025-11-06 21:12:47",
+            updatedAt: "2025-11-06 21:12:47",
+            images: []
+          }
+        ]);
+
+        const publicImages = ref([
+          {
+            id: "pub-modelscope",
+            name: "modelscope",
+            description: "General-purpose ModelScope development base image",
+            tags: ["IDE-JupyterLab", "Training"],
+            system: "linux",
+            architecture: "amd64",
+            updatedAt: "2025-12-03 16:20:05",
+            regions: ["wuhan", "shanghai"],
+            versions: [
+              {
+                id: "pub-modelscope-v4",
+                version: "v4",
+                system: "linux",
+                architecture: "amd64",
+                region: "wuhan",
+                size: "5.62 GB",
+                savedAt: "2025-12-03 16:20:05"
+              }
+            ]
+          },
+          {
+            id: "pub-ray",
+            name: "ray",
+            description: "Built-in image for Ray cluster workloads and distributed serving",
+            tags: ["Ray", "Inference", "IDE-JupyterCoder"],
+            system: "linux",
+            architecture: "amd64",
+            updatedAt: "2025-11-04 11:40:12",
+            regions: ["wuhan"],
+            versions: [
+              {
+                id: "pub-ray-v3",
+                version: "jupytercoder_svd3",
+                system: "linux",
+                architecture: "amd64",
+                region: "wuhan",
+                size: "5.52 GB",
+                savedAt: "2025-11-04 11:40:12"
+              }
+            ]
+          },
+          {
+            id: "pub-fast",
+            name: "fast-inference",
+            description: "Slim runtime tuned for low-latency inference",
+            tags: ["Inference", "Container-Instance"],
+            system: "linux",
+            architecture: "amd64",
+            updatedAt: "2025-11-04 11:40:12",
+            regions: ["wuhan", "beijing"],
+            versions: [
+              {
+                id: "pub-fast-v2",
+                version: "v2",
+                system: "linux",
+                architecture: "amd64",
+                region: "beijing",
+                size: "4.82 GB",
+                savedAt: "2025-11-04 11:40:12"
+              }
+            ]
+          }
+        ]);
+
+        const pushTasks = ref([
+          {
+            id: "push-1",
+            imageName: "cuda122-cudnn8-pytorch",
+            version: "v2.0",
+            project: "project-image",
+            status: "pushError",
+            reason: "推送镜像任务失败",
+            taskName: "devjob-2u01wh",
+            taskType: "develop",
+            createdAt: 1763967852000
+          },
+          {
+            id: "push-2",
+            imageName: "cuda122-cudnn8-tensorflow",
+            version: "v1",
+            project: "project-image",
+            status: "completed",
+            reason: "",
+            taskName: "devjob-y6ecrj",
+            taskType: "develop",
+            createdAt: 1763083632000
+          },
+          {
+            id: "push-3",
+            imageName: "ray-2.35-cu122",
+            version: "r2",
+            project: "project-o9gh2n",
+            status: "pushing",
+            reason: "",
+            taskName: "trainjob-91p0lz",
+            taskType: "train",
+            createdAt: 1763988612000
+          },
+          {
+            id: "push-4",
+            imageName: "jupytercoder-svd3",
+            version: "v3",
+            project: "project-o9gh2n",
+            status: "pending",
+            reason: "",
+            taskName: "idejob-q8m2sv",
+            taskType: "develop",
+            createdAt: 1763992212000
+          },
+          {
+            id: "push-5",
+            imageName: "fast-inference",
+            version: "v2",
+            project: "project-o9gh2n",
+            status: "commitError",
+            reason: "创建推送任务时缺少目标仓库权限",
+            taskName: "inferjob-a1z0pc",
+            taskType: "inference",
+            createdAt: 1763902212000
+          }
+        ]);
+
+        const FilterBox = {
+          name: "FilterBox",
+          props: {
+            schema: { type: Array, default: () => [] },
+            model: { type: Object, required: true },
+            texts: { type: Object, default: () => ({}) },
+            showExpand: { type: Boolean, default: true },
+            defaultVisibleCount: { type: Number, default: 3 },
+            hideOperation: { type: Boolean, default: false },
+            autoSearchNonInput: { type: Boolean, default: true },
+            storageKey: { type: String, default: "smf-filter-expanded" }
+          },
+          emits: ["search", "reset"],
+          setup(props, { emit }) {
+            const expanded = ref(true);
+            const mergedTexts = computed(() => ({
+              search: "搜索",
+              reset: "重置",
+              expand: "展开筛选",
+              collapse: "收起筛选",
+              ...props.texts
+            }));
+            const allVisibleFields = computed(() => props.schema.filter((item) => !item.hidden));
+            const showExpandToggle = computed(
+              () => props.showExpand && allVisibleFields.value.length > props.defaultVisibleCount
+            );
+            const primaryFields = computed(() =>
+              showExpandToggle.value
+                ? allVisibleFields.value.slice(0, props.defaultVisibleCount)
+                : allVisibleFields.value
+            );
+            const extraFields = computed(() =>
+              showExpandToggle.value ? allVisibleFields.value.slice(props.defaultVisibleCount) : []
+            );
+            const resolveType = (field) => field.type || "input";
+            const getOptions = (field) => field.options || [];
+            const controlStyle = (field) => {
+              const width = field.width || undefined;
+              if (!width) return undefined;
+              return { width: typeof width === "number" ? `${width}px` : width, minWidth: "120px" };
+            };
+            const onInputChange = (field, value) => {
+              props.model[field.prop] = value;
+            };
+            const onNonInputChange = (field, value) => {
+              props.model[field.prop] = value;
+              if (props.autoSearchNonInput) emit("search", { reason: "auto" });
+            };
+            const onReset = () => {
+              props.schema.forEach((field) => {
+                props.model[field.prop] = Object.prototype.hasOwnProperty.call(field, "value")
+                  ? cloneValue(field.value)
+                  : resolveType(field) === "date-picker"
+                    ? []
+                    : "";
+              });
+              emit("reset");
+            };
+            const syncExpandState = () => {
+              if (!showExpandToggle.value) {
+                expanded.value = false;
+                return;
+              }
+              try {
+                const stored = window.localStorage.getItem(props.storageKey);
+                expanded.value = stored === null ? true : stored === "1";
+              } catch (error) {
+                expanded.value = true;
+              }
+            };
+            watch(showExpandToggle, syncExpandState, { immediate: true });
+            watch(expanded, (value) => {
+              if (!showExpandToggle.value) return;
+              try {
+                window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+              } catch (error) {}
+            });
+            return {
+              expanded,
+              mergedTexts,
+              showExpandToggle,
+              primaryFields,
+              extraFields,
+              resolveType,
+              getOptions,
+              controlStyle,
+              onInputChange,
+              onNonInputChange,
+              onReset
+            };
+          },
+          template: `
+            <section class="smf-filter-box">
+              <div class="smf-filter-row smf-filter-main-row">
+                <div v-for="field in primaryFields" :key="field.prop" class="smf-filter-item">
+                  <span class="smf-filter-label">{{ field.label }}</span>
+                  <div class="smf-filter-control" :style="controlStyle(field)">
+                    <el-input
+                      v-if="resolveType(field) === 'input'"
+                      :model-value="model[field.prop]"
+                      :clearable="field.clearable !== false"
+                      :placeholder="field.placeholder || ''"
+                      @update:model-value="(val) => onInputChange(field, val)"
+                      @change="(val) => onInputChange(field, val)"
+                      @keyup.enter="$emit('search', { reason: 'enter' })"
+                    ></el-input>
+                    <el-select
+                      v-else-if="resolveType(field) === 'select'"
+                      :model-value="model[field.prop]"
+                      :clearable="field.clearable !== false"
+                      :placeholder="field.placeholder || ''"
+                      @update:model-value="(val) => onNonInputChange(field, val)"
+                    >
+                      <el-option
+                        v-for="option in getOptions(field)"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value"
+                      ></el-option>
+                    </el-select>
+                    <el-date-picker
+                      v-else-if="resolveType(field) === 'date-picker'"
+                      :model-value="model[field.prop]"
+                      :type="field.dateType || 'daterange'"
+                      :clearable="field.clearable !== false"
+                      :format="field.format || 'YYYY-MM-DD'"
+                      :value-format="field.valueFormat || 'YYYY-MM-DD'"
+                      :start-placeholder="field.startPlaceholder || ''"
+                      :end-placeholder="field.endPlaceholder || ''"
+                      @update:model-value="(val) => onNonInputChange(field, val)"
+                    ></el-date-picker>
+                  </div>
+                </div>
+                <div v-if="showExpandToggle || !hideOperation" class="smf-filter-actions">
+                  <el-button
+                    v-if="showExpandToggle"
+                    link
+                    type="primary"
+                    class="smf-filter-toggle-btn"
+                    @click="expanded = !expanded"
+                  >
+                    <el-icon v-if="expanded"><CaretTop></CaretTop></el-icon>
+                    <el-icon v-else><CaretBottom></CaretBottom></el-icon>
+                    {{ expanded ? mergedTexts.collapse : mergedTexts.expand }}
+                  </el-button>
+                  <template v-if="!hideOperation">
+                    <el-button type="primary" @click="$emit('search', { reason: 'manual' })">{{ mergedTexts.search }}</el-button>
+                    <el-button @click="onReset">{{ mergedTexts.reset }}</el-button>
+                  </template>
+                </div>
+              </div>
+              <transition name="smf-expand">
+                <div v-if="showExpandToggle && expanded" class="smf-filter-row" style="margin-top: 10px;">
+                  <div v-for="field in extraFields" :key="field.prop" class="smf-filter-item">
+                    <span class="smf-filter-label">{{ field.label }}</span>
+                    <div class="smf-filter-control" :style="controlStyle(field)">
+                      <el-input
+                        v-if="resolveType(field) === 'input'"
+                        :model-value="model[field.prop]"
+                        :clearable="field.clearable !== false"
+                        :placeholder="field.placeholder || ''"
+                        @update:model-value="(val) => onInputChange(field, val)"
+                        @change="(val) => onInputChange(field, val)"
+                        @keyup.enter="$emit('search', { reason: 'enter' })"
+                      ></el-input>
+                      <el-select
+                        v-else-if="resolveType(field) === 'select'"
+                        :model-value="model[field.prop]"
+                        :clearable="field.clearable !== false"
+                        :placeholder="field.placeholder || ''"
+                        @update:model-value="(val) => onNonInputChange(field, val)"
+                      >
+                        <el-option
+                          v-for="option in getOptions(field)"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        ></el-option>
+                      </el-select>
+                      <el-date-picker
+                        v-else-if="resolveType(field) === 'date-picker'"
+                        :model-value="model[field.prop]"
+                        :type="field.dateType || 'daterange'"
+                        :clearable="field.clearable !== false"
+                        :format="field.format || 'YYYY-MM-DD'"
+                        :value-format="field.valueFormat || 'YYYY-MM-DD'"
+                        :start-placeholder="field.startPlaceholder || ''"
+                        :end-placeholder="field.endPlaceholder || ''"
+                        @update:model-value="(val) => onNonInputChange(field, val)"
+                      ></el-date-picker>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+            </section>
+          `
+        };
+
+        const App = {
+          components: { FilterBox },
+          setup() {
+            const lang = ref("zh"), version = ref("V1.1"), topActive = ref("infra"), sideActive = ref("imageService"), headerRegion = ref("wuhan"), activeTab = ref("my"), selectedProjectId = ref("project-image"), projectKeyword = ref(""), loading = ref(false), loadError = ref(false);
+            const query = reactive({ pageIndex: 1, pageSize: 10, keyword: "", pushImageKeyword: "", pushTaskKeyword: "", tag: "", arch: "", region: "", status: "", taskType: "", updatedAt: [] });
+            const detailDrawer = reactive({ visible: false, mode: "my", record: null });
+            const projectDialog = reactive({ visible: false, form: { name: "", description: "" } });
+            const uploadDialog = reactive({ visible: false });
+            const tagDialog = reactive({ visible: false, imageId: "", tagValues: [] });
+            const copyDialog = reactive({ visible: false, sourceImage: "", sourceVersion: "", sourceProject: "", targetProject: "", targetRepo: "" });
+            const dict = {
+              zh: { topInfra: "AI基础设施", topWorkspace: "用户空间", docsCenter: "文档中心", language: "中文简体", regionWuhan: "武汉", regionShanghai: "上海", regionBeijing: "北京", regionShenzhen: "深圳", groupApp: "应用开发", groupModel: "模型管理", groupStorage: "存储服务", menuIDE: "开发IDE", menuTrain: "模型训练", menuApp: "我的应用", menuModelFile: "模型文件", menuImageService: "镜像服务", menuDataset: "数据集", menuObject: "对象存储", menuBlock: "块存储", menuFile: "文件存储", pageTitle: "镜像服务", pageDescMy: "", pageDescPublic: "", pageDescPush: "", tabMy: "我的镜像", tabPublic: "公有镜像", tabPush: "镜像推送", projectScopeTitle: "项目列表", projectScopeHint: "", projectSearch: "搜索项目", projectSearchPlaceholder: "输入项目名称搜索", matchedProjects: "匹配项目", currentProjectPanel: "当前项目", projectContextHint: "", versionCount: "版本数", latestImage: "最近活跃镜像", usagePercent: "使用率", imageCount: "镜像数", quotaUsed: "使用额 / 额度", updatedAt: "更新时间", createdAt: "创建时间", visibility: "可见范围", private: "私有", public: "公开", search: "搜索", reset: "重置", expand: "展开筛选", collapse: "收起筛选", filterKeywordMy: "镜像名称", filterKeywordPublic: "镜像名称", filterImageNamePush: "镜像名称", filterTaskNamePush: "任务名称", filterTag: "标签", filterArch: "架构", filterRegion: "地域", filterStatus: "状态", filterTaskType: "任务类型", filterUpdatedAt: "更新时间", tableTitleMy: "镜像", tableTitlePublic: "公有镜像目录", tableTitlePush: "推送任务列表", tableNoteMy: "", tableNotePublic: "", tableNotePush: "失败原因仅在异常任务中展开展示，成功记录保持精简。", colName: "镜像名称", colScene: "适用场景", colLatestVersion: "最新版本", colArch: "架构", colSize: "大小", colUpdatedAt: "更新时间", colAction: "操作", colRegion: "地域", colStatus: "状态", colReason: "失败原因", colTaskName: "任务名称", colTaskType: "任务类型", detail: "详情", editTags: "编辑标签", more: "更多", delete: "删除", copyVersion: "复制版本", retry: "再次推送", newProject: "新建项目", uploadImage: "镜像上传", sync: "同步项目", total: "共", items: "条", emptyNoData: "当前没有可展示的数据。", emptyNoResult: "没有符合条件的结果，请调整筛选条件。", errorTitle: "数据加载失败", errorDesc: "请稍后重试，或检查当前页面配置。", retryLoad: "重新加载", detailTitleMy: "镜像详情", detailTitlePublic: "公有镜像详情", detailDescMy: "", detailDescPublic: "", latestVersionLabel: "最新版本", sceneTags: "标签", regionCoverage: "地域覆盖", versionList: "版本列表", digest: "摘要", saveTime: "保存时间", system: "系统", targetProject: "目标项目", targetRepo: "目标仓库", currentProject: "当前项目", currentRepo: "当前仓库", projectName: "项目名称", projectDescription: "项目描述", projectDescriptionPlaceholder: "请输入项目描述（选填）", projectNameRule: "项目名称由小写字符、数字和 . _ - 组成，至少 1 个字符，并以字母或数字开头", projectRegion: "地域", projectOwner: "创建人", publicSwitch: "是否公开", createProjectTitle: "新建镜像项目", createProjectHint: "默认创建私有项目，先用最少字段完成创建，复杂治理属性放到后续配置。", uploadGuideTitle: "客户端上传指引", uploadGuideLead: "默认只展示上传动作真正需要的信息，避免把说明写成大段文档。", precondition: "前提条件", stepLogin: "1. 登录镜像仓库", stepTag: "2. 重新标记本地镜像", stepPush: "3. 推送到目标项目", editTagTitle: "编辑标签", moreScenes: "更多场景", copyTitle: "复制镜像版本", cancel: "取消", confirm: "确认", save: "保存", create: "创建", deleteImageConfirm: "删除后该镜像将从当前项目中移除，是否继续？", deleteVersionConfirm: "删除后该版本将无法再被复制或回滚，是否继续？", deleteTaskConfirm: "是否删除这条推送记录？", syncDone: "已发起同步，项目列表将在稍后刷新。", createDone: "镜像项目已创建。", tagSaved: "标签已更新。", copyDone: "已生成复制任务原型。", retryDone: "已发起再次推送。", deleted: "删除成功。", typeDevelop: "开发环境", typeTrain: "模型训练", typeInference: "模型推理", typeInstance: "容器实例", summaryQueue: "待处理", summaryRunning: "进行中", summaryFailed: "异常任务", summarySuccess: "已完成", failureNone: "无", projectEmptyTitle: "当前项目暂无镜像", projectEmptyHint: "建议先通过“镜像上传”接入已有环境镜像，再补充标签与版本治理。", projectEmptySearch: "没有匹配的项目，请调整项目搜索条件。" },
+              en: { topInfra: "AI Infrastructure", topWorkspace: "Workspace", docsCenter: "Docs Center", language: "English", regionWuhan: "Wuhan", regionShanghai: "Shanghai", regionBeijing: "Beijing", regionShenzhen: "Shenzhen", groupApp: "Application Dev", groupModel: "Model Management", groupStorage: "Storage Services", menuIDE: "Development IDE", menuTrain: "Model Training", menuApp: "My Apps", menuModelFile: "Model Files", menuImageService: "Image Service", menuDataset: "Datasets", menuObject: "Object Storage", menuBlock: "Block Storage", menuFile: "File Storage", pageTitle: "Image Service", pageDescMy: "", pageDescPublic: "", pageDescPush: "", tabMy: "My Images", tabPublic: "Public Images", tabPush: "Image Push", projectScopeTitle: "Projects", projectScopeHint: "", projectSearch: "Search Projects", projectSearchPlaceholder: "Search by project name", matchedProjects: "Matched Projects", currentProjectPanel: "Current Project", projectContextHint: "", versionCount: "Versions", latestImage: "Latest Active Image", usagePercent: "Usage", imageCount: "Images", quotaUsed: "Usage / Quota", updatedAt: "Updated At", createdAt: "Created At", visibility: "Visibility", private: "Private", public: "Public", search: "Search", reset: "Reset", expand: "Expand Filters", collapse: "Collapse Filters", filterKeywordMy: "Image Name", filterKeywordPublic: "Image Name", filterImageNamePush: "Image Name", filterTaskNamePush: "Task Name", filterTag: "Tag", filterArch: "Architecture", filterRegion: "Region", filterStatus: "Status", filterTaskType: "Task Type", filterUpdatedAt: "Updated At", tableTitleMy: "Images", tableTitlePublic: "Public Catalog", tableTitlePush: "Push Tasks", tableNoteMy: "", tableNotePublic: "", tableNotePush: "Failure reasons are emphasized only when a job is abnormal; successful rows remain lightweight.", colName: "Image Name", colScene: "Scenario Tags", colLatestVersion: "Latest Version", colArch: "Architecture", colSize: "Size", colUpdatedAt: "Updated At", colAction: "Actions", colRegion: "Region", colStatus: "Status", colReason: "Failure Reason", colTaskName: "Task Name", colTaskType: "Task Type", detail: "Details", editTags: "Edit Tags", more: "More", delete: "Delete", copyVersion: "Copy Version", retry: "Retry Push", newProject: "New Project", uploadImage: "Upload Image", sync: "Sync Project", total: "Total", items: "items", emptyNoData: "No data is available on this page yet.", emptyNoResult: "No matching results. Adjust your filters.", errorTitle: "Failed to Load Data", errorDesc: "Please try again later or review the current page settings.", retryLoad: "Reload", detailTitleMy: "Image Details", detailTitlePublic: "Public Image Details", detailDescMy: "", detailDescPublic: "", latestVersionLabel: "Latest Version", sceneTags: "Tags", regionCoverage: "Region Coverage", versionList: "Versions", digest: "Digest", saveTime: "Saved At", system: "System", targetProject: "Target Project", targetRepo: "Target Repository", currentProject: "Current Project", currentRepo: "Current Repository", projectName: "Project Name", publicSwitch: "Expose as Public", createProjectTitle: "Create Image Project", createProjectHint: "New projects are private by default. Start with the smallest set of fields first and move governance-heavy attributes to later configuration.", uploadGuideTitle: "Client Upload Guide", uploadGuideLead: "The guide only keeps information required for upload, instead of turning the dialog into a long document.", precondition: "Prerequisite", stepLogin: "1. Sign in to registry", stepTag: "2. Re-tag local image", stepPush: "3. Push into target project", editTagTitle: "Edit Tags", moreScenes: "More", copyTitle: "Copy Image Version", cancel: "Cancel", confirm: "Confirm", save: "Save", create: "Create", deleteImageConfirm: "This image will be removed from the current project. Continue?", deleteVersionConfirm: "This version will no longer be available for copy or rollback. Continue?", deleteTaskConfirm: "Delete this push record?", syncDone: "Sync has been triggered and the project view will refresh shortly.", createDone: "Image project created.", tagSaved: "Tags updated.", copyDone: "A copy task prototype has been created.", retryDone: "Retry push triggered.", deleted: "Deleted successfully.", typeDevelop: "Development", typeTrain: "Training", typeInference: "Inference", typeInstance: "Container Instance", summaryQueue: "Queued", summaryRunning: "In Progress", summaryFailed: "Abnormal", summarySuccess: "Completed", failureNone: "None", projectEmptyTitle: "No images in this project", projectEmptyHint: "Start with an upload, then enrich tags and version governance when the image is reusable.", projectEmptySearch: "No matching projects. Adjust the project search." }
+            };
+            dict.zh.latestImage = "最近使用记录";
+            dict.zh.usedImage = "使用镜像";
+            dict.zh.imageVersion = "镜像版本";
+            dict.zh.usageTime = "使用时间";
+            dict.zh.viewImage = "查看镜像";
+            dict.zh.usageEmptyTitle = "暂无使用记录";
+            dict.zh.usageEmptyHint = "镜像被开发、训练或推理作业使用后，将在这里展示最近一条使用记录。";
+            dict.zh.projectCount = "项目数";
+            dict.zh.deleteProject = "删除项目";
+            dict.zh.deleteProjectConfirm = "删除后该项目及其镜像将从当前账号下移除，是否继续？";
+            dict.zh.projectDeleted = "镜像项目已删除。";
+            dict.en.latestImage = "Latest Usage";
+            dict.en.usedImage = "Image Used";
+            dict.en.imageVersion = "Image Version";
+            dict.en.usageTime = "Usage Time";
+            dict.en.viewImage = "View Image";
+            dict.en.usageEmptyTitle = "No usage record yet";
+            dict.en.usageEmptyHint = "After this image is used by development, training, or inference jobs, the latest usage record will appear here.";
+            dict.en.projectCount = "Projects";
+            dict.en.deleteProject = "Delete Project";
+            dict.en.deleteProjectConfirm = "This project and its images will be removed from the current account. Continue?";
+            dict.en.projectDeleted = "Image project deleted.";
+            const t = computed(() => dict[lang.value]);
+            const regionOptions = computed(() => [{ value: "wuhan", label: t.value.regionWuhan }, { value: "shanghai", label: t.value.regionShanghai }, { value: "beijing", label: t.value.regionBeijing }, { value: "shenzhen", label: t.value.regionShenzhen }]);
+            const topMenus = computed(() => [{ key: "infra", label: t.value.topInfra }, { key: "workspace", label: t.value.topWorkspace }]);
+            const sideGroups = computed(() => [
+              { title: t.value.groupApp, items: [{ key: "ide", label: t.value.menuIDE, icon: "Monitor" }, { key: "train", label: t.value.menuTrain, icon: "DataBoard" }, { key: "app", label: t.value.menuApp, icon: "Box" }] },
+              { title: t.value.groupModel, items: [{ key: "modelFile", label: t.value.menuModelFile, icon: "Files" }, { key: "imageService", label: t.value.menuImageService, icon: "Collection" }, { key: "dataset", label: t.value.menuDataset, icon: "FolderOpened" }] },
+              { title: t.value.groupStorage, items: [{ key: "object", label: t.value.menuObject, icon: "Coin" }, { key: "block", label: t.value.menuBlock, icon: "SetUp" }, { key: "file", label: t.value.menuFile, icon: "Document" }] }
+            ]);
+            const translateVisibility = (value) => {
+              const match = visibilityCatalog.find((item) => item.value === value);
+              return match ? match[lang.value] : value;
+            };
+            const taskTypeLabel = (type) => {
+              if (type === "develop") return t.value.typeDevelop;
+              if (type === "train") return t.value.typeTrain;
+              if (type === "inference") return t.value.typeInference;
+              return t.value.typeInstance;
+            };
+            const statusLabel = (status) => {
+              const match = pushStatusMeta[status];
+              return match ? match[lang.value] : status;
+            };
+            const statusClass = (status) => `smf-status smf-status-${pushStatusMeta[status] ? pushStatusMeta[status].className : "info"}`;
+            const visibleProjects = computed(() => {
+              const keyword = String(projectKeyword.value || "").trim().toLowerCase();
+              if (!keyword) return myProjects.value;
+              return myProjects.value.filter((item) => item.name.toLowerCase().includes(keyword));
+            });
+            const activeProject = computed(() => visibleProjects.value.find((item) => item.id === selectedProjectId.value) || visibleProjects.value[0] || null);
+            const currentRows = computed(() => {
+              if (activeTab.value === "my") return activeProject.value ? activeProject.value.images : [];
+              if (activeTab.value === "public") return publicImages.value.filter((item) => (item.regions || []).includes(headerRegion.value));
+              return pushTasks.value;
+            });
+            const headerDesc = computed(() => activeTab.value === "my" ? t.value.pageDescMy : activeTab.value === "public" ? t.value.pageDescPublic : t.value.pageDescPush);
+            const tabList = computed(() => [
+              { key: "my", label: t.value.tabMy, count: myProjects.value.reduce((total, project) => total + project.images.length, 0) },
+              { key: "public", label: t.value.tabPublic, count: publicImages.value.filter((item) => (item.regions || []).includes(headerRegion.value)).length },
+              { key: "push", label: t.value.tabPush, count: pushTasks.value.length }
+            ]);
+            const pushSummary = computed(() => [
+              { key: "queued", title: t.value.summaryQueue, value: pushTasks.value.filter((item) => item.status === "pending" || item.status === "committing").length },
+              { key: "running", title: t.value.summaryRunning, value: pushTasks.value.filter((item) => item.status === "pushing" || item.status === "deleting").length },
+              { key: "failed", title: t.value.summaryFailed, value: pushTasks.value.filter((item) => item.status === "pushError" || item.status === "commitError").length },
+              { key: "success", title: t.value.summarySuccess, value: pushTasks.value.filter((item) => item.status === "completed").length }
+            ]);
+            const filterSchema = computed(() => {
+              if (activeTab.value === "my") return [];
+              if (activeTab.value === "public") return [
+                { prop: "keyword", label: t.value.filterKeywordPublic, type: "input", clearable: true, placeholder: lang.value === "zh" ? "输入镜像名称搜索" : "Search by image name", width: 240 },
+                { prop: "tag", label: t.value.filterTag, type: "select", clearable: true, options: tagCatalog.map((item) => ({ label: item, value: item })), width: 180 }
+              ];
+              return [
+                { prop: "pushImageKeyword", label: t.value.filterImageNamePush, type: "input", clearable: true, placeholder: lang.value === "zh" ? "输入镜像名称搜索" : "Search by image name", width: 220 },
+                { prop: "pushTaskKeyword", label: t.value.filterTaskNamePush, type: "input", clearable: true, placeholder: lang.value === "zh" ? "输入任务名称搜索" : "Search by task name", width: 220 },
+                { prop: "status", label: t.value.filterStatus, type: "select", clearable: true, options: Object.keys(pushStatusMeta).map((key) => ({ label: statusLabel(key), value: key })), width: 180 },
+                { prop: "taskType", label: t.value.filterTaskType, type: "select", clearable: true, options: [{ label: taskTypeLabel("develop"), value: "develop" }, { label: taskTypeLabel("train"), value: "train" }, { label: taskTypeLabel("inference"), value: "inference" }, { label: taskTypeLabel("instance"), value: "instance" }], width: 180 }
+              ];
+            });
+            const filteredRows = computed(() => {
+              if (activeTab.value === "my") return currentRows.value;
+              return currentRows.value.filter((row) => {
+              const keyword = String(query.keyword || "").trim().toLowerCase();
+              if (activeTab.value === "push") {
+                const pushImageKeyword = String(query.pushImageKeyword || "").trim().toLowerCase();
+                const pushTaskKeyword = String(query.pushTaskKeyword || "").trim().toLowerCase();
+                if (pushImageKeyword && !String(row.imageName || "").toLowerCase().includes(pushImageKeyword)) return false;
+                if (pushTaskKeyword && !String(row.taskName || "").toLowerCase().includes(pushTaskKeyword)) return false;
+              } else if (keyword) {
+                const textPool = `${row.name} ${row.description || ""}`.toLowerCase();
+                if (!textPool.includes(keyword)) return false;
+              }
+              if (query.tag && !((row.tags || []).includes(query.tag))) return false;
+              if (query.arch && row.architecture !== query.arch) return false;
+              if (query.status && row.status !== query.status) return false;
+              if (query.taskType && row.taskType !== query.taskType) return false;
+              if (activeTab.value === "push") return true;
+              const dateValue = row.updatedAt || row.createdAt;
+              return matchesDateRange(dateValue, query.updatedAt);
+            });
+            });
+            const pagedRows = computed(() => filteredRows.value.slice((query.pageIndex - 1) * query.pageSize, (query.pageIndex - 1) * query.pageSize + query.pageSize));
+            const pageCount = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / query.pageSize)));
+            const detailVersions = computed(() => detailDrawer.record ? detailDrawer.record.versions || [] : []);
+            const buildSceneSummary = (tags = []) => {
+              if (!Array.isArray(tags) || !tags.length) return { visible: [], overflow: [] };
+              return { visible: tags.slice(0, 1), overflow: tags.slice(1, 7) };
+            };
+            const uploadCommands = computed(() => {
+              const projectName = activeProject.value ? activeProject.value.name : "target-project";
+              return { login: `docker login image.icbs.shop -u robot$${projectName} -p ******`, tag: `docker tag <local-image>:<version> image.icbs.shop/${projectName}/<image-name>:<version>`, push: `docker push image.icbs.shop/${projectName}/<image-name>:<version>` };
+            });
+            const triggerLoad = () => { loading.value = true; loadError.value = false; window.setTimeout(() => { loading.value = false; }, 320); };
+            const resetFiltersForTab = () => { query.pageIndex = 1; query.pageSize = 10; query.keyword = ""; query.pushImageKeyword = ""; query.pushTaskKeyword = ""; query.tag = ""; query.arch = ""; query.region = ""; query.status = ""; query.taskType = ""; query.updatedAt = []; };
+            const handleSearch = () => { query.pageIndex = 1; };
+            const handleReset = () => { query.pageIndex = 1; };
+            const handlePageChange = (page) => { query.pageIndex = Math.max(1, Math.min(page, pageCount.value)); window.scrollTo(0, 0); };
+            const handlePageSizeChange = (size) => { query.pageSize = size; query.pageIndex = 1; window.scrollTo(0, 0); };
+            const handleHeaderAction = (actionKey) => {
+              if (actionKey === "newProject") { projectDialog.visible = true; projectDialog.form.name = ""; projectDialog.form.description = ""; return; }
+              if (actionKey === "upload") { uploadDialog.visible = true; return; }
+              triggerLoad(); ElMessage.success(t.value.syncDone);
+            };
+            const openDetail = (mode, row) => { detailDrawer.mode = mode; detailDrawer.record = row; detailDrawer.visible = true; };
+            const openEditTags = (row) => { tagDialog.visible = true; tagDialog.imageId = row.id; tagDialog.tagValues = [...row.tags]; };
+            const saveTags = () => { const match = activeProject.value.images.find((item) => item.id === tagDialog.imageId); if (match) { match.tags = [...tagDialog.tagValues]; tagDialog.visible = false; ElMessage.success(t.value.tagSaved); } };
+            const openCopyDialog = (imageRow, versionRow) => { copyDialog.visible = true; copyDialog.sourceImage = imageRow.name; copyDialog.sourceVersion = versionRow.version; copyDialog.sourceProject = activeProject.value ? activeProject.value.name : ""; copyDialog.targetProject = myProjects.value[0] ? myProjects.value[0].name : ""; copyDialog.targetRepo = imageRow.name; };
+            const submitCopy = () => { copyDialog.visible = false; ElMessage.success(t.value.copyDone); };
+            const confirmDeleteProject = async (project = activeProject.value) => {
+              if (!project) return;
+              await ElMessageBox.confirm(t.value.deleteProjectConfirm, t.value.deleteProject, { type: "warning", confirmButtonText: t.value.confirm, cancelButtonText: t.value.cancel });
+              const deletingId = project.id;
+              myProjects.value = myProjects.value.filter((item) => item.id !== deletingId);
+              if (selectedProjectId.value === deletingId) {
+                selectedProjectId.value = myProjects.value[0] ? myProjects.value[0].id : "";
+              }
+              ElMessage.success(t.value.projectDeleted);
+            };
+            const confirmDeleteImage = async (row) => { await handlePushCommand("delete", row); };
+            const confirmDeleteVersion = async (row) => { await ElMessageBox.confirm(t.value.deleteVersionConfirm, t.value.delete, { type: "warning", confirmButtonText: t.value.confirm, cancelButtonText: t.value.cancel }); detailDrawer.record.versions = detailDrawer.record.versions.filter((item) => item.id !== row.id); if (detailDrawer.record.versions.length > 0) detailDrawer.record.latestVersion = detailDrawer.record.versions[0].version; ElMessage.success(t.value.deleted); };
+            const handlePushCommand = async (command, row) => {
+              if (command === "retry") {
+                row.status = "pending";
+                row.reason = "";
+                ElMessage.success(t.value.retryDone);
+                return;
+              }
+              if (command === "editTags") {
+                openEditTags(row);
+                return;
+              }
+              const message = activeTab.value === "push" ? t.value.deleteTaskConfirm : t.value.deleteImageConfirm;
+              await ElMessageBox.confirm(message, t.value.delete, { type: "warning", confirmButtonText: t.value.confirm, cancelButtonText: t.value.cancel });
+              if (activeTab.value === "push") {
+                pushTasks.value = pushTasks.value.filter((item) => item.id !== row.id);
+              } else if (activeProject.value) {
+                activeProject.value.images = activeProject.value.images.filter((item) => item.id !== row.id);
+                activeProject.value.imageCount = activeProject.value.images.length;
+              }
+              ElMessage.success(t.value.deleted);
+            };
+            const handleCreateProject = () => { const rawName = projectDialog.form.name.trim(); const nameRule = /^[a-z0-9][a-z0-9._-]*$/; if (!rawName) { ElMessage.error(lang.value === "zh" ? "请填写项目名称" : "Project name is required"); return; } if (!nameRule.test(rawName)) { ElMessage.error(lang.value === "zh" ? "项目名称由小写字符、数字和 . _ - 组成，且需以字母或数字开头" : "Use lowercase letters, numbers, and . _ -, and start with a letter or number"); return; } const now = formatTimestamp(Date.now()); const newId = `project-${Date.now()}`; myProjects.value.unshift({ id: newId, name: rawName, description: (projectDialog.form.description || "").trim(), region: "华东-上海一", createdBy: "当前用户", visibility: "private", imageCount: 0, usageRate: 0, quotaUsed: "0 GB", quotaTotal: "1 TB", createdAt: now, updatedAt: now, images: [] }); selectedProjectId.value = newId; projectDialog.visible = false; ElMessage.success(t.value.createDone); };
+            const projectUsagePercent = (project) => { if (!project) return "0%"; if (typeof project.usageRate === "number") return `${project.usageRate}%`; return "0%"; };
+            const retryLoad = () => triggerLoad();
+            watch(activeTab, () => { resetFiltersForTab(); triggerLoad(); });
+            watch(selectedProjectId, () => { query.pageIndex = 1; triggerLoad(); });
+            watch(visibleProjects, (projects) => {
+              if (!projects.length) return;
+              if (!projects.some((item) => item.id === selectedProjectId.value)) selectedProjectId.value = projects[0].id;
+            }, { immediate: true });
+            watch(pageCount, (maxPage) => { if (query.pageIndex > maxPage) query.pageIndex = maxPage; });
+            onMounted(() => { triggerLoad(); });
+            return { lang, version, topActive, sideActive, headerRegion, activeTab, selectedProjectId, projectKeyword, loading, loadError, query, t, regionOptions, topMenus, sideGroups, myProjects, visibleProjects, activeProject, tabList, headerDesc, pushSummary, filterSchema, filteredRows, pagedRows, detailDrawer, detailVersions, projectDialog, uploadDialog, tagDialog, copyDialog, handleSearch, handleReset, handlePageChange, handlePageSizeChange, handleHeaderAction, openDetail, openEditTags, saveTags, openCopyDialog, submitCopy, handlePushCommand, handleCreateProject, retryLoad, formatTimestamp, statusLabel, statusClass, taskTypeLabel, translateVisibility, summarizeQuota, quotaPercent, imageVersionCount, projectVersionCount, uploadCommands, tagCatalog, currentRows, confirmDeleteProject, confirmDeleteImage, confirmDeleteVersion, buildSceneSummary };
+          },
+          template: `
+            <div v-cloak>
+              <header class="smf-shell-header">
+                <div class="smf-logo-block"><span class="smf-logo-mark"></span><span class="smf-logo-text">AGIOne</span></div>
+                <nav class="smf-top-nav" aria-label="top-menu">
+                  <button v-for="item in topMenus" :key="item.key" type="button" class="smf-top-nav-btn" :class="{ active: topActive === item.key }" @click="topActive = item.key">{{ item.label }}</button>
+                </nav>
+                <div class="smf-header-right">
+                  <el-dropdown trigger="click" @command="headerRegion = $event">
+                    <span class="smf-region-trigger" role="button"><el-icon><Location></Location></el-icon>{{ regionOptions.find((item) => item.value === headerRegion)?.label || regionOptions[0].label }}</span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item v-for="option in regionOptions" :key="option.value" :command="option.value">{{ option.label }}</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <a href="javascript:void(0)" class="smf-head-link"><el-icon><Document></Document></el-icon>{{ t.docsCenter }}</a>
+                  <el-dropdown trigger="click" @command="lang = $event">
+                    <span class="smf-head-link" role="button"><el-icon><Globe></Globe></el-icon>{{ t.language }}</span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="zh">中文简体</el-dropdown-item>
+                        <el-dropdown-item command="en">English</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <span class="smf-avatar">IC</span>
+                  <span class="smf-version">{{ version }}</span>
+                </div>
+              </header>
+
+              <div class="smf-shell-body">
+                <aside class="smf-shell-side" aria-label="side-menu">
+                  <section v-for="group in sideGroups" :key="group.title" class="smf-side-group">
+                    <h3 class="smf-side-title">{{ group.title }}</h3>
+                    <button v-for="item in group.items" :key="item.key" type="button" class="smf-side-item" :class="{ active: sideActive === item.key }" @click="sideActive = item.key">
+                      <el-icon class="smf-side-icon"><component :is="item.icon"></component></el-icon>
+                      <span>{{ item.label }}</span>
+                    </button>
+                  </section>
+                </aside>
+
+                <main class="smf-shell-main">
+                  <section class="smf-card smf-tab-box">
+                    <el-tabs :model-value="activeTab" @tab-change="activeTab = $event">
+                      <el-tab-pane v-for="tab in tabList" :key="tab.key" :name="tab.key">
+                        <template #label><span>{{ tab.label }}</span><span class="smf-tab-badge">{{ tab.count }}</span></template>
+                      </el-tab-pane>
+                    </el-tabs>
+                  </section>
+
+                  <section v-if="activeTab === 'my'" class="smf-project-rail smf-section">
+                    <div class="smf-project-workspace">
+                      <aside class="smf-card smf-project-sidebar-panel">
+                        <div class="smf-rail-head">
+                          <div class="smf-rail-head-main">
+                            <div class="smf-project-count">{{ t.projectCount }} · {{ myProjects.length }}</div>
+                          </div>
+                        </div>
+                        <div class="smf-project-search">
+                          <el-input v-model="projectKeyword" :placeholder="t.projectSearchPlaceholder" clearable></el-input>
+                        </div>
+                        <div class="smf-project-toolbar">
+                          <el-button type="primary" @click="handleHeaderAction('newProject')">{{ t.newProject }}</el-button>
+                        </div>
+                        <div v-if="visibleProjects.length" class="smf-project-list">
+                          <button v-for="project in visibleProjects" :key="project.id" type="button" class="smf-project-list-item" :class="{ active: activeProject && activeProject.id === project.id }" @click="selectedProjectId = project.id">
+                            <div class="smf-project-list-head">
+                              <div class="min-w-0">
+                                <h3 class="smf-project-name">{{ project.name }}</h3>
+                                
+                              </div>
+                            </div>
+                            <div class="smf-project-list-foot">
+                              <div class="smf-project-state"><i class="smf-project-state-dot"></i>{{ project.imageCount }} {{ t.imageCount }}</div>
+                              <div class="smf-project-state">{{ t.usagePercent }} · {{ quotaPercent(project.quotaUsed, project.quotaTotal) }}%</div>
+                            </div>
+                          </button>
+                        </div>
+                        <div v-else class="py-8">
+                          <el-empty :description="t.projectEmptySearch"></el-empty>
+                        </div>
+                      </aside>
+
+                      <div class="smf-project-stage">
+                        <template v-if="activeProject">
+                          <section class="smf-card smf-selected-project smf-selected-project-detail">
+                            <div class="smf-project-hero">
+                              <div class="smf-selected-project-head">
+                                <div class="min-w-0">
+                                  <h2 class="smf-project-hero-title">{{ activeProject.name }}</h2>
+                                  <p v-if="activeProject.description" class="smf-project-hero-desc">{{ activeProject.description }}</p>
+                                  <div class="smf-project-overview-meta">
+                                    <span class="smf-project-meta-chip">{{ t.projectRegion }}：{{ activeProject.region || "华东-上海一" }}</span>
+                                    <span class="smf-project-meta-chip">{{ t.projectOwner }}：{{ activeProject.createdBy || "当前用户" }}</span>
+                                    <span class="smf-project-meta-chip">{{ t.createdAt }}：{{ activeProject.createdAt }}</span>
+                                    <span class="smf-project-meta-chip">{{ t.updatedAt }}：{{ activeProject.updatedAt }}</span>
+                                  </div>
+                                </div>
+                                <div class="smf-selected-project-actions">
+                                  <el-button type="danger" plain @click="confirmDeleteProject().catch(() => {})">{{ t.deleteProject }}</el-button>
+                                  <el-button type="primary" @click="handleHeaderAction('upload')">{{ t.uploadImage }}</el-button>
+                                </div>
+                              </div>
+                              <div class="smf-project-overview-shell">
+                                <article class="smf-project-panel">
+                                  <div class="smf-project-panel-head">
+                                    <div class="smf-project-panel-label">{{ t.quotaUsed }}</div>
+                                    
+                                  </div>
+                                  <div class="smf-project-panel-value-row"><div class="smf-project-panel-value">{{ summarizeQuota(activeProject.quotaUsed, activeProject.quotaTotal) }}</div><div class="smf-project-usage-inline">{{ t.usagePercent }} · {{ quotaPercent(activeProject.quotaUsed, activeProject.quotaTotal) }}%</div></div>
+                                  <div class="smf-project-usage-track">
+                                    <div class="smf-project-usage-fill" :style="{ width: quotaPercent(activeProject.quotaUsed, activeProject.quotaTotal) + '%' }"></div>
+                                  </div>
+                                </article>
+                                <div class="smf-project-overview-stats">
+                                  <div class="smf-project-mini-stat">
+                                    <div class="smf-project-panel-label">{{ t.imageCount }}</div>
+                                    <div class="smf-project-mini-stat-value">{{ activeProject.imageCount }}</div>
+                                    
+                                  </div>
+                                  <div class="smf-project-mini-stat">
+                                    <div class="smf-project-panel-label">{{ t.versionCount }}</div>
+                                    <div class="smf-project-mini-stat-value">{{ projectVersionCount(activeProject) }}</div>
+                                    
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </section>
+                          <section v-if="loading" class="smf-card smf-table-wrap">
+                            <div class="smf-skeleton-card"><el-skeleton :rows="6" animated></el-skeleton></div>
+                          </section>
+                          <section v-else-if="loadError" class="smf-card smf-table-wrap">
+                            <el-result icon="error" :title="t.errorTitle" :sub-title="t.errorDesc"><template #extra><el-button type="primary" @click="retryLoad">{{ t.retryLoad }}</el-button></template></el-result>
+                          </section>
+                          <section v-else class="smf-card smf-table-wrap">
+                            <div class="smf-table-head">
+                              <div><div class="smf-table-title">{{ t.tableTitleMy }}</div></div>
+                              <div class="smf-muted text-[12px]">{{ t.total }} {{ filteredRows.length }} {{ t.items }}</div>
+                            </div>
+
+                            <template v-if="filteredRows.length">
+                              <el-table :data="pagedRows" class="smf-table" row-key="id" height="520">
+                                <el-table-column :label="t.colName" min-width="196" show-overflow-tooltip><template #default="{ row }"><div class="smf-name-cell"><span class="smf-name-main">{{ row.name }}</span><span class="smf-name-sub">{{ t.colUpdatedAt }} · {{ row.updatedAt }}</span></div></template></el-table-column>
+                                <el-table-column :label="t.colScene" min-width="220"><template #default="{ row }"><div v-if="buildSceneSummary(row.tags).visible.length" class="smf-tag-group"><span class="smf-scene-token">{{ buildSceneSummary(row.tags).visible[0] }}</span><el-popover v-if="buildSceneSummary(row.tags).overflow.length" placement="top" trigger="hover" :width="220"><template #reference><button type="button" class="smf-tag-overflow-trigger" :aria-label="t.moreScenes">+{{ buildSceneSummary(row.tags).overflow.length }}</button></template><div class="smf-tag-popover"><div v-for="tag in row.tags || []" :key="tag" class="smf-tag-popover-item"><span class="smf-scene-token">{{ tag }}</span></div></div></el-popover></div><span v-else>-</span></template></el-table-column>
+                                <el-table-column prop="latestVersion" :label="t.colLatestVersion" min-width="92"></el-table-column>
+                                <el-table-column :label="t.versionCount" min-width="76"><template #default="{ row }">{{ imageVersionCount(row) }}</template></el-table-column>
+                                <el-table-column prop="updatedAt" :label="t.colUpdatedAt" min-width="136"></el-table-column>
+                                <el-table-column :label="t.colAction" fixed="right" width="92">
+                                  <template #default="{ row }">
+                                    <div class="smf-actions">
+                                      <el-button link type="primary" @click="openDetail('my', row)">{{ t.detail }}</el-button>
+                                      <el-dropdown trigger="click" @command="handlePushCommand($event, row)">
+                                        <el-button link>{{ t.more }}</el-button>
+                                        <template #dropdown>
+                                          <el-dropdown-menu>
+                                            <el-dropdown-item command="editTags">{{ t.editTags }}</el-dropdown-item>
+                                            <el-dropdown-item command="delete">{{ t.delete }}</el-dropdown-item>
+                                          </el-dropdown-menu>
+                                        </template>
+                                      </el-dropdown>
+                                    </div>
+                                  </template>
+                                </el-table-column>
+                              </el-table>
+                            </template>
+
+                            <div v-else class="py-8">
+                              <el-empty :description="t.projectEmptyTitle"></el-empty>
+                              <p v-if="!currentRows.length" class="m-0 text-center text-[12px] text-[#667085]">{{ t.projectEmptyHint }}</p>
+                            </div>
+
+                            <div class="smf-pager" v-if="filteredRows.length"><el-pagination :current-page="query.pageIndex" :page-size="query.pageSize" :page-sizes="[10, 20, 30, 50, 100]" :total="filteredRows.length" layout="total, sizes, prev, pager, next, jumper" background @size-change="handlePageSizeChange" @current-change="handlePageChange"></el-pagination></div>
+                          </section>
+                        </template>
+                        <section v-else class="smf-card smf-selected-project">
+                          <el-empty :description="t.projectEmptySearch"></el-empty>
+                        </section>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section v-if="activeTab === 'push'" class="smf-section">
+                    <div class="smf-summary-grid">
+                      <article v-for="card in pushSummary" :key="card.key" class="smf-card smf-summary-card"><div class="smf-summary-title">{{ card.title }}</div><div class="smf-summary-value">{{ card.value }}</div></article>
+                    </div>
+                  </section>
+
+                  <filter-box v-if="activeTab !== 'my'" :schema="filterSchema" :model="query" :texts="{ search: t.search, reset: t.reset, expand: t.expand, collapse: t.collapse }" :show-expand="true" :default-visible-count="activeTab === 'push' ? 4 : 3" :hide-operation="false" :auto-search-non-input="true" :storage-key="'image-service-filter-' + activeTab" @search="handleSearch" @reset="handleReset"></filter-box>
+
+                  <section v-if="activeTab !== 'my' && loading" class="smf-card smf-table-wrap"><div class="smf-skeleton-card"><el-skeleton :rows="6" animated></el-skeleton></div></section>
+                  <section v-else-if="activeTab !== 'my' && loadError" class="smf-card smf-table-wrap"><el-result icon="error" :title="t.errorTitle" :sub-title="t.errorDesc"><template #extra><el-button type="primary" @click="retryLoad">{{ t.retryLoad }}</el-button></template></el-result></section>
+
+                  <section v-else-if="activeTab !== 'my'" class="smf-card smf-table-wrap">
+                    <div class="smf-table-head">
+                      <div><div class="smf-table-title">{{ activeTab === 'my' ? t.tableTitleMy : activeTab === 'public' ? t.tableTitlePublic : t.tableTitlePush }}</div><div v-if="activeTab === 'my' ? t.tableNoteMy : activeTab === 'public' ? t.tableNotePublic : t.tableNotePush" class="smf-table-note">{{ activeTab === 'my' ? t.tableNoteMy : activeTab === 'public' ? t.tableNotePublic : t.tableNotePush }}</div></div>
+                      <div class="smf-muted text-[12px]">{{ t.total }} {{ filteredRows.length }} {{ t.items }}</div>
+                    </div>
+
+                    <template v-if="filteredRows.length">
+                      <el-table v-if="activeTab === 'public'" :data="pagedRows" class="smf-table" row-key="id" height="460">
+                        <el-table-column :label="t.colName" min-width="196" show-overflow-tooltip><template #default="{ row }"><div class="smf-name-cell"><span class="smf-name-main">{{ row.name }}</span><span class="smf-name-sub">{{ t.colUpdatedAt }} · {{ row.updatedAt }}</span></div></template></el-table-column>
+                        <el-table-column :label="t.colScene" min-width="220"><template #default="{ row }"><div v-if="buildSceneSummary(row.tags).visible.length" class="smf-tag-group"><span class="smf-scene-token">{{ buildSceneSummary(row.tags).visible[0] }}</span><el-popover v-if="buildSceneSummary(row.tags).overflow.length" placement="top" trigger="hover" :width="220"><template #reference><button type="button" class="smf-tag-overflow-trigger" :aria-label="t.moreScenes">+{{ buildSceneSummary(row.tags).overflow.length }}</button></template><div class="smf-tag-popover"><div v-for="tag in row.tags || []" :key="tag" class="smf-tag-popover-item"><span class="smf-scene-token">{{ tag }}</span></div></div></el-popover></div><span v-else>-</span></template></el-table-column>
+                        <el-table-column :label="t.colLatestVersion" min-width="92"><template #default="{ row }">{{ row.versions[0]?.version || '-' }}</template></el-table-column>
+                        <el-table-column :label="t.versionCount" min-width="76"><template #default="{ row }">{{ row.versions ? row.versions.length : 0 }}</template></el-table-column>
+                        <el-table-column prop="updatedAt" :label="t.colUpdatedAt" min-width="136"></el-table-column>
+                        <el-table-column :label="t.colAction" fixed="right" width="110"><template #default="{ row }"><el-button link type="primary" @click="openDetail('public', row)">{{ t.detail }}</el-button></template></el-table-column>
+                      </el-table>
+
+                      <el-table v-else :data="pagedRows" class="smf-table" row-key="id" height="460">
+                        <el-table-column :label="t.colName" min-width="220"><template #default="{ row }"><div class="smf-name-cell"><span class="smf-name-main">{{ row.imageName }}</span><span class="smf-name-sub">{{ row.version }} · {{ row.project }}</span></div></template></el-table-column>
+                        <el-table-column prop="taskName" :label="t.colTaskName" min-width="160" show-overflow-tooltip></el-table-column>
+                        <el-table-column :label="t.colTaskType" min-width="120"><template #default="{ row }">{{ taskTypeLabel(row.taskType) }}</template></el-table-column>
+                        <el-table-column :label="t.colStatus" min-width="140"><template #default="{ row }"><span :class="statusClass(row.status)"><i class="smf-status-dot"></i>{{ statusLabel(row.status) }}</span></template></el-table-column>
+                        <el-table-column :label="t.colReason" min-width="220" show-overflow-tooltip><template #default="{ row }"><span>{{ row.reason || t.failureNone }}</span></template></el-table-column>
+                        <el-table-column :label="t.createdAt" min-width="180"><template #default="{ row }">{{ formatTimestamp(row.createdAt) }}</template></el-table-column>
+                        <el-table-column :label="t.colAction" fixed="right" width="140"><template #default="{ row }"><div class="flex items-center gap-2"><el-button link type="primary" @click="handlePushCommand('retry', row)">{{ t.retry }}</el-button><el-button link @click="handlePushCommand('delete', row)">{{ t.delete }}</el-button></div></template></el-table-column>
+                      </el-table>
+                    </template>
+
+                    <div v-else class="py-8">
+                      <el-empty :description="activeTab === 'my' && !activeProject ? t.projectEmptySearch : (currentRows.length ? t.emptyNoResult : (activeTab === 'my' ? t.projectEmptyTitle : t.emptyNoData))"></el-empty>
+                      <p v-if="activeTab === 'my' && activeProject && !currentRows.length" class="m-0 text-center text-[12px] text-[#667085]">{{ t.projectEmptyHint }}</p>
+                    </div>
+
+                    <div class="smf-pager" v-if="filteredRows.length"><el-pagination :current-page="query.pageIndex" :page-size="query.pageSize" :page-sizes="[10, 20, 30, 50, 100]" :total="filteredRows.length" layout="total, sizes, prev, pager, next, jumper" background @size-change="handlePageSizeChange" @current-change="handlePageChange"></el-pagination></div>
+                  </section>
+                </main>
+              </div>
+
+              <el-drawer v-model="detailDrawer.visible" class="smf-detail-drawer" :size="'1000px'" :title="detailDrawer.mode === 'my' ? t.detailTitleMy : t.detailTitlePublic" destroy-on-close>
+                <template #header><div class="smf-drawer-header"><div><h2 class="smf-drawer-title">{{ detailDrawer.record ? detailDrawer.record.name : '-' }}</h2><div v-if="detailDrawer.mode === 'my' ? t.detailDescMy : t.detailDescPublic" class="smf-drawer-sub">{{ detailDrawer.mode === 'my' ? t.detailDescMy : t.detailDescPublic }}</div></div><el-tag round effect="plain">{{ detailDrawer.mode === 'my' ? t.tabMy : t.tabPublic }}</el-tag></div></template>
+                <template v-if="detailDrawer.record">
+                  <div class="smf-overview-grid">
+                    <div class="smf-overview-card"><div class="smf-overview-label">{{ t.latestVersionLabel }}</div><div class="smf-overview-value">{{ detailDrawer.record.latestVersion || detailDrawer.record.versions[0]?.version || '-' }}</div></div>
+                    <div class="smf-overview-card"><div class="smf-overview-label">{{ t.sceneTags }}</div><div class="smf-overview-value">{{ (detailDrawer.record.tags || []).join(', ') || '-' }}</div></div>
+                    <div class="smf-overview-card"><div class="smf-overview-label">{{ t.versionCount }}</div><div class="smf-overview-value">{{ detailVersions.length }}</div></div>
+                    <div class="smf-overview-card"><div class="smf-overview-label">{{ detailDrawer.mode === 'public' ? t.regionCoverage : t.updatedAt }}</div><div class="smf-overview-value">{{ detailDrawer.mode === 'public' ? detailDrawer.record.regions.join(', ') : detailDrawer.record.updatedAt }}</div></div>
+                  </div>
+                  <section class="smf-section">
+                    <div class="smf-table-head"><div><div class="smf-table-title">{{ t.versionList }}</div><div class="smf-table-note">{{ detailDrawer.record.description }}</div></div></div>
+                    <el-table :data="detailVersions" class="smf-table" row-key="id" height="420">
+                      <el-table-column prop="version" :label="t.colLatestVersion" min-width="140"></el-table-column>
+                      <el-table-column v-if="detailDrawer.mode === 'public'" prop="system" :label="t.system" min-width="110"></el-table-column>
+                      <el-table-column prop="architecture" :label="t.colArch" min-width="110"></el-table-column>
+                      <el-table-column v-if="detailDrawer.mode === 'public'" prop="region" :label="t.colRegion" min-width="120"></el-table-column>
+                      <el-table-column prop="size" :label="t.colSize" min-width="110"></el-table-column>
+                      <el-table-column :label="t.digest" min-width="220" show-overflow-tooltip><template #default="{ row }"><span>{{ row.digest || '-' }}</span></template></el-table-column>
+                      <el-table-column prop="savedAt" :label="t.saveTime" min-width="170"></el-table-column>
+                      <el-table-column v-if="detailDrawer.mode === 'my'" :label="t.colAction" fixed="right" width="180"><template #default="{ row }"><div class="flex items-center gap-2"><el-button link type="primary" @click="openCopyDialog(detailDrawer.record, row)">{{ t.copyVersion }}</el-button><el-button link @click="confirmDeleteVersion(row)">{{ t.delete }}</el-button></div></template></el-table-column>
+                    </el-table>
+                  </section>
+                </template>
+              </el-drawer>
+
+              <el-dialog v-model="projectDialog.visible" :title="t.createProjectTitle" width="560px">
+                <el-form label-position="top">
+                  <el-form-item :label="t.projectName" required><el-input v-model="projectDialog.form.name"></el-input><div class="smf-form-help">{{ t.projectNameRule }}</div></el-form-item>
+                  <el-form-item :label="t.projectDescription"><el-input v-model="projectDialog.form.description" type="textarea" :rows="3" :placeholder="t.projectDescriptionPlaceholder"></el-input></el-form-item>
+                </el-form>
+                
+                <template #footer><el-button @click="projectDialog.visible = false">{{ t.cancel }}</el-button><el-button type="primary" @click="handleCreateProject">{{ t.create }}</el-button></template>
+              </el-dialog>
+
+              <el-dialog v-model="uploadDialog.visible" :title="t.uploadGuideTitle" width="760px">
+                <div class="smf-dialog-note">{{ t.uploadGuideLead }}</div>
+                <div class="smf-form-help"><strong>{{ t.precondition }}：</strong>{{ lang === 'zh' ? '准备一台已安装 Docker 20.10+ 的主机，并确保能访问目标镜像仓库。' : 'Prepare a Docker 20.10+ host with network access to the target registry.' }}</div>
+                <div class="smf-code-block">{{ t.stepLogin }}
+{{ uploadCommands.login }}
+
+{{ t.stepTag }}
+{{ uploadCommands.tag }}
+
+{{ t.stepPush }}
+{{ uploadCommands.push }}</div>
+                <template #footer><el-button type="primary" @click="uploadDialog.visible = false">{{ t.confirm }}</el-button></template>
+              </el-dialog>
+
+              <el-dialog v-model="tagDialog.visible" :title="t.editTagTitle" width="560px">
+                <el-select v-model="tagDialog.tagValues" multiple style="width: 100%;" collapse-tags><el-option v-for="tag in tagCatalog" :key="tag" :label="tag" :value="tag"></el-option></el-select>
+                <div class="smf-form-help">{{ lang === 'zh' ? '标签只承担场景识别作用，不在行内重复展示项目信息。' : 'Tags stay focused on scenario fit instead of repeating project context in the table.' }}</div>
+                <template #footer><el-button @click="tagDialog.visible = false">{{ t.cancel }}</el-button><el-button type="primary" @click="saveTags">{{ t.save }}</el-button></template>
+              </el-dialog>
+
+              <el-dialog v-model="copyDialog.visible" :title="t.copyTitle" width="620px">
+                <el-form label-position="top">
+                  <el-form-item :label="t.currentProject"><el-input :model-value="copyDialog.sourceProject" disabled></el-input></el-form-item>
+                  <el-form-item :label="t.currentRepo"><el-input :model-value="copyDialog.sourceImage + ':' + copyDialog.sourceVersion" disabled></el-input></el-form-item>
+                  <el-form-item :label="t.targetProject"><el-select v-model="copyDialog.targetProject" style="width: 100%;"><el-option v-for="project in myProjects" :key="project.id" :label="project.name" :value="project.name"></el-option></el-select></el-form-item>
+                  <el-form-item :label="t.targetRepo"><el-input v-model="copyDialog.targetRepo"></el-input></el-form-item>
+                </el-form>
+                <template #footer><el-button @click="copyDialog.visible = false">{{ t.cancel }}</el-button><el-button type="primary" @click="submitCopy">{{ t.confirm }}</el-button></template>
+              </el-dialog>
+            </div>
+          `
+        };
+        const app = createApp(App);
+        Object.entries(ElementPlusIconsVue).forEach(([name, component]) => { app.component(name, component); });
+        app.use(ElementPlus);
+        app.mount("#app");
+      })();
+    </script>
+  </body>
+</html>
