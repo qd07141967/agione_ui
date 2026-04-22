@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AGIOne 资源配额总览原型 V5.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" />
+    <style>
+      :root {
+        --smf-primary: #4c5df7;
+        --smf-page-bg: #f5f7fb;
+        --smf-surface: rgba(255, 255, 255, 0.94);
+        --smf-border: #e5e7eb;
+        --smf-border-soft: #eef1f5;
+        --smf-text: #111827;
+        --smf-text-2: #475569;
+        --smf-text-3: #94a3b8;
+        --smf-shadow-s1: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --smf-shadow-s3: 0 18px 40px rgba(76, 93, 247, 0.12);
+        --z-topbar: 1000;
+        --z-side: 100;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 1280px;
+        font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--smf-text);
+        background:
+          radial-gradient(circle at top left, rgba(76, 93, 247, 0.1), transparent 20%),
+          radial-gradient(circle at 95% 0%, rgba(56, 189, 248, 0.08), transparent 18%),
+          linear-gradient(180deg, #f8f9fd 0%, #f4f6fb 100%);
+      }
+
+      [v-cloak] { display: none; }
+
+      button:focus-visible,
+      [role="button"]:focus-visible,
+      a:focus-visible,
+      .el-input__wrapper:focus-within,
+      .el-select__wrapper:focus-within {
+        outline: 2px solid var(--smf-primary);
+        outline-offset: 3px;
+      }
+
+      .smf-shell-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #ebeef5;
+        z-index: var(--z-topbar);
+      }
+
+      .smf-logo-block {
+        height: 52px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .smf-logo-mark {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(140deg, #25338b 8%, #4c5df7 50%, #9da8ff 100%);
+      }
+
+      .smf-logo-mark::before {
+        content: "";
+        position: absolute;
+        inset: 4px 7px 4px 7px;
+        border-radius: 6px 16px 10px 6px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62));
+        transform: skewX(-12deg);
+      }
+
+      .smf-logo-text { font-size: 16px; font-weight: 700; color: #303133; }
+
+      .smf-top-nav {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 0 8px;
+      }
+
+      .smf-top-nav-btn {
+        position: relative;
+        height: 52px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: #606266;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .smf-top-nav-btn.active { color: #303133; font-weight: 600; }
+      .smf-top-nav-btn.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--smf-primary);
+      }
+
+      .smf-header-right {
+        margin-left: auto;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        padding-right: 20px;
+        gap: 20px;
+      }
+
+      .smf-head-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #303133;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .smf-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 800;
+        color: #3555f5;
+        background: linear-gradient(180deg, #e5ecff 0%, #dbe4ff 100%);
+      }
+
+      .smf-shell-body {
+        display: flex;
+        height: calc(100vh - 52px);
+        margin-top: 52px;
+      }
+
+      .smf-shell-side {
+        width: 200px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        padding: 12px 0;
+        background: rgba(255, 255, 255, 0.95);
+        border-right: 1px solid #ebeef5;
+        z-index: var(--z-side);
+      }
+
+      .smf-side-group { margin-bottom: 8px; }
+      .smf-side-title {
+        margin: 0;
+        padding: 12px 0 8px 20px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #909399;
+      }
+
+      .smf-side-item {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        padding: 0 16px 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        color: #303133;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .smf-side-item.active {
+        background: #eef0ff;
+        color: var(--smf-primary);
+        font-weight: 600;
+      }
+
+      .smf-side-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 999px;
+        background: var(--smf-primary);
+      }
+
+      .smf-shell-main {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        padding: 20px 28px 28px;
+      }
+
+      .smf-card-shell {
+        border: 1px solid rgba(229, 231, 235, 0.92);
+        border-radius: 20px;
+        background: var(--smf-surface);
+        box-shadow: var(--smf-shadow-s1);
+      }
+
+      .smf-header-box {
+        padding: 22px 24px 20px;
+        background:
+          radial-gradient(circle at right top, rgba(76, 93, 247, 0.1), transparent 24%),
+          linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
+      }
+
+      .smf-breadcrumb {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #98a2b3;
+        text-transform: uppercase;
+      }
+
+      .smf-title-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .smf-title-row h1 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.1;
+        font-weight: 800;
+        color: #111827;
+      }
+
+      .smf-version-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4c5df7;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .smf-header-desc {
+        margin-top: 10px;
+        max-width: 860px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: #5b6475;
+      }
+
+      .smf-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+      }
+
+      .smf-overview-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1.52fr 1.08fr;
+        gap: 14px;
+      }
+
+      .smf-gpu-panel,
+      .smf-cm-card,
+      .smf-scene-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+        border: 1px solid rgba(229, 231, 235, 0.92);
+        box-shadow: var(--smf-shadow-s1);
+      }
+
+      .smf-gpu-panel {
+        padding: 18px;
+        padding-bottom: 12px;
+        border-radius: 18px;
+      }
+
+      .smf-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .smf-panel-head h3,
+      .smf-cm-card h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: #111827;
+      }
+
+      .smf-panel-head p,
+      .smf-content-title p,
+      .smf-scene-card p,
+      .smf-cm-note {
+        margin: 6px 0 0;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #64748b;
+      }
+
+      .smf-gpu-total { display: flex; align-items: center; }
+
+      .smf-total-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 248px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(76, 93, 247, 0.1), rgba(255, 255, 255, 0.98));
+        border: 1px solid rgba(76, 93, 247, 0.16);
+      }
+
+      .smf-total-card-mark {
+        width: 12px;
+        height: 44px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #4c5df7 0%, #7c8cff 100%);
+        box-shadow: 0 8px 20px rgba(76, 93, 247, 0.18);
+        flex-shrink: 0;
+      }
+
+      .smf-total-card-value {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .smf-total-card-value em {
+        font-style: normal;
+        font-size: 13px;
+        font-weight: 700;
+        color: #475569;
+      }
+
+      .smf-total-card-copy strong {
+        display: block;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1;
+        color: #1f33c7;
+      }
+
+      .smf-total-card-copy span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #5b6475;
+      }
+
+      .smf-gpu-model-grid {
+        margin-top: 14px;
+        border: 1px solid rgba(229, 231, 235, 0.96);
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .smf-gpu-model-head,
+      .smf-gpu-model-row {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.65fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(130px, 0.86fr);
+        align-items: center;
+        column-gap: 12px;
+        padding: 12px 16px;
+      }
+
+      .smf-gpu-model-head {
+        background: #f8fafc;
+        border-bottom: 1px solid var(--smf-border);
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+      }
+
+      .smf-status-head {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .smf-sort-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .smf-sort-toggle.active {
+        color: #4c5df7;
+      }
+
+      .smf-status-tip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4c5df7;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .smf-gpu-model-body {
+        max-height: 344px;
+        overflow-y: auto;
+      }
+
+      .smf-gpu-model-row {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 160ms ease;
+      }
+
+      .smf-gpu-model-row:last-child { border-bottom: 0; }
+      .smf-gpu-model-row:hover { background: #f8faff; }
+
+      .smf-gpu-model-name strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 800;
+        color: #111827;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .smf-gpu-model-name span {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--smf-text-3);
+      }
+
+      .smf-gpu-value {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .smf-status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .smf-status-pill.normal { background: #ecfdf3; color: #067647; }
+      .smf-status-pill.warn { background: #fff7ed; color: #c2410c; }
+      .smf-status-pill.high { background: #fef2f2; color: #b42318; }
+      .smf-status-pill.unlimited { background: #eef2ff; color: #4c5df7; }
+
+      .smf-cm-panel {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .smf-cm-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 12px;
+        border-radius: 18px;
+      }
+
+      .smf-cm-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .smf-cm-kpi {
+        text-align: right;
+        min-width: 64px;
+      }
+
+      .smf-cm-kpi strong {
+        display: block;
+        font-size: 21px;
+        line-height: 1;
+        color: #111827;
+      }
+
+      .smf-cm-kpi span {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .smf-cm-progress { margin-top: 6px; }
+
+      .smf-cm-progress-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .smf-cm-progress-track {
+        margin-top: 5px;
+        height: 8px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #e8edf8;
+      }
+
+      .smf-cm-progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #4c5df7 0%, #6ca6ff 100%);
+      }
+
+      .smf-cm-data,
+      .smf-scene-metrics,
+      .smf-drawer-kpis {
+        margin-top: 8px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .smf-cm-data { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .smf-scene-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .smf-drawer-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+      .smf-metric-box,
+      .smf-scene-mini {
+        border-radius: 14px;
+        padding: 10px;
+        background: #ffffff;
+        border: 1px solid var(--smf-border);
+      }
+
+      .smf-metric-box label,
+      .smf-scene-mini label {
+        display: block;
+        font-size: 12px;
+        line-height: 1.15;
+        color: #64748b;
+      }
+
+      .smf-metric-box strong,
+      .smf-scene-mini strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 18px;
+        line-height: 1.05;
+        color: #111827;
+      }
+
+      .smf-value-unit {
+        margin-top: 1px;
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .smf-cm-note {
+        margin-top: 2px;
+        line-height: 1.4;
+      }
+
+      .smf-content-box {
+        margin-top: 16px;
+        padding: 16px 18px 18px;
+      }
+
+      .smf-content-head {
+        margin-bottom: 10px;
+      }
+
+      .smf-content-title strong {
+        font-size: 15px;
+        color: #111827;
+      }
+
+      .smf-card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .smf-scene-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 0;
+        padding: 14px;
+        border-radius: 18px;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .smf-scene-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--smf-shadow-s3);
+      }
+
+      .smf-scene-card h4 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 800;
+        color: #111827;
+      }
+
+      .smf-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .smf-meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid rgba(229, 231, 235, 0.92);
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .smf-scene-bottom {
+        margin-top: 4px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .smf-drawer-shell {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .smf-drawer-top {
+        flex: 0 0 auto;
+      }
+
+      .smf-drawer-bottom {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .smf-drawer-table-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .smf-drawer-pagination {
+        flex: 0 0 auto;
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .smf-drawer-section {
+        border: 1px solid var(--smf-border-soft);
+        border-radius: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+
+      .smf-drawer-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .smf-drawer-title strong {
+        font-size: 14px;
+        color: #111827;
+      }
+
+      .smf-drawer-title span {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .smf-filter-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .smf-drawer-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .smf-drawer-title strong {
+        font-size: 14px;
+        color: #111827;
+      }
+
+      .smf-drawer-title span {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .smf-filter-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .smf-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .smf-status .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .smf-status.running { color: #67c23a; }
+      .smf-status.starting { color: #4c5df7; }
+
+      @media (max-width: 1440px) {
+        .smf-overview-grid { grid-template-columns: 1.35fr 1fr; }
+        .smf-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 1280px) {
+        body { min-width: 0; }
+        .smf-shell-side { display: none; }
+        .smf-shell-main { padding: 16px; }
+        .smf-overview-grid { grid-template-columns: 1fr; }
+        .smf-drawer-kpis,
+        .smf-scene-metrics,
+        .smf-card-grid,
+        .smf-cm-data { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+    <script>
+      (function () {
+        if (!window.Vue || !window.ElementPlus || !window.ElementPlusIconsVue) {
+          document.body.innerHTML = '<div style="padding:24px;font-family:Inter,sans-serif;color:#b42318;">CDN dependencies failed to load. Please refresh and try again.</div>';
+          return;
+        }
+
+        const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+        const { Document, Globe, Location, Grid, Histogram, Search, Cpu, Monitor } = ElementPlusIconsVue;
+
+        const App = {
+          setup() {
+            const lang = ref("zh");
+            const topActive = ref("infra");
+            const sideActive = ref("quota");
+            const region = ref("wuhan");
+            const version = ref("V5.0");
+            const loading = ref(true);
+            const detailVisible = ref(false);
+            const detailSceneKey = ref("inference");
+            const gpuSort = reactive({ field: "used", order: "desc" });
+
+            const dict = {
+              zh: {
+                docsCenter: "文档中心",
+                topAi: "模型及AI服务",
+                topInfra: "AI基础设施",
+                topAccount: "账务",
+                topSpace: "用户空间",
+                groupInfra: "基础设施",
+                groupUsage: "资源治理",
+                menuQuota: "资源配额",
+                menuUsage: "资源用量",
+                menuSpecs: "资源规格",
+                menuMonitor: "监控中心",
+                breadcrumb: "AI Infrastructure",
+                pageTitle: "资源配额总览",
+                pageDesc: "查看当前租户的 XPU、CPU、内存总量、已使用量和未使用量。",
+                refresh: "刷新",
+                export: "导出占用视图",
+                gpuPool: "XPU 资源总览",
+                gpuSub: "按型号查看当前租户可使用的 XPU 资源情况。",
+                gpuTotalUsed: "XPU 已使用总量",
+                total: "总量",
+                idle: "未使用",
+                used: "已使用",
+                status: "状态",
+                statusRule: "状态说明：已使用 / 总量 ≥ 90% 为紧张，70% ~ 90% 为较高，低于 70% 为正常；总量不限时显示不限。",
+                statusNormal: "正常",
+                statusWarn: "较高",
+                statusHigh: "紧张",
+                statusUnlimited: "不限",
+                gpuOtherHint: "未单独配置上限的 GPU 统一归入该类。",
+                cpu: "CPU",
+                memory: "内存",
+                unlimitedHint: "总量不限",
+                contentTitle: "已使用资源按场景分布",
+                inference: "模型推理",
+                dev: "开发环境",
+                instance: "容器实例",
+                activeItems: "占用资源项",
+                activeItemsShort: "资源项",
+                viewDetails: "查看占用明细",
+                sceneSummaryInference: "用于查看推理服务、推理任务对资源的占用。",
+                sceneSummaryDev: "用于查看开发环境、Notebook 等交互式环境的资源占用。",
+                sceneSummaryInstance: "用于查看容器实例类负载的资源占用。",
+                drawerTitle: "资源占用明细",
+                drawerSummary: "场景总占用概览",
+                drawerList: "占用明细列表",
+                drawerScene: "场景",
+                drawerSearch: "任务 / 环境 / 实例",
+                drawerSearchPlaceholder: "搜索任务、环境或实例名称",
+                drawerStatus: "状态",
+                drawerGpu: "显卡已使用",
+                drawerCpu: "CPU已使用",
+                drawerMemory: "内存已使用",
+                filterAll: "全部",
+                running: "运行中",
+                starting: "启动中"
+              },
+              en: {
+                docsCenter: "Docs Center",
+                topAi: "Models & AI Services",
+                topInfra: "AI Infrastructure",
+                topAccount: "Billing",
+                topSpace: "User Space",
+                groupInfra: "Infrastructure",
+                groupUsage: "Resource Governance",
+                menuQuota: "Resource Quota",
+                menuUsage: "Resource Usage",
+                menuSpecs: "Specifications",
+                menuMonitor: "Monitoring",
+                breadcrumb: "AI Infrastructure",
+                pageTitle: "Resource Quota Overview",
+                pageDesc: "View tenant total, used, and remaining XPU, CPU, and memory resources.",
+                refresh: "Refresh",
+                export: "Export View",
+                gpuPool: "XPU Resource Overview",
+                gpuSub: "View current tenant usage by XPU model.",
+                gpuTotalUsed: "XPU Total Used",
+                total: "Total",
+                idle: "Idle",
+                used: "Used",
+                status: "Status",
+                statusRule: "Status rule: Tight when used/total ≥ 90%, Elevated when 70% ~ 90%, Normal below 70%; Unlimited when no total limit is set.",
+                statusNormal: "Normal",
+                statusWarn: "Elevated",
+                statusHigh: "Tight",
+                statusUnlimited: "Unlimited",
+                gpuOtherHint: "GPU models without dedicated quota are grouped here.",
+                cpu: "CPU",
+                memory: "Memory",
+                unlimitedHint: "Unlimited total",
+                contentTitle: "Used Resource Distribution by Scenario",
+                inference: "Inference",
+                dev: "Development",
+                instance: "Container Instance",
+                activeItems: "Occupied Items",
+                activeItemsShort: "Items",
+                viewDetails: "View Details",
+                sceneSummaryInference: "Used to view resource occupancy from inference services and jobs.",
+                sceneSummaryDev: "Used to view resource occupancy from development environments.",
+                sceneSummaryInstance: "Used to view resource occupancy from container instances.",
+                drawerTitle: "Resource Usage Details",
+                drawerSummary: "Scenario Summary",
+                drawerList: "Occupied Resource Items",
+                drawerScene: "Scenario",
+                drawerSearch: "Job / Env / Instance",
+                drawerSearchPlaceholder: "Search job, environment, or instance",
+                drawerStatus: "Status",
+                drawerGpu: "GPU Used",
+                drawerCpu: "CPU Used",
+                drawerMemory: "Memory Used",
+                filterAll: "All",
+                running: "Running",
+                starting: "Starting"
+              }
+            };
+
+            const t = computed(() => dict[lang.value]);
+            const tx = (zh, en) => (lang.value === "zh" ? zh : en);
+
+            const topMenus = computed(() => [
+              { key: "ai", label: t.value.topAi },
+              { key: "infra", label: t.value.topInfra },
+              { key: "billing", label: t.value.topAccount },
+              { key: "space", label: t.value.topSpace }
+            ]);
+
+            const sideGroups = computed(() => [
+              {
+                title: t.value.groupInfra,
+                items: [
+                  { key: "specs", label: t.value.menuSpecs, icon: "Grid" },
+                  { key: "monitor", label: t.value.menuMonitor, icon: "Monitor" }
+                ]
+              },
+              {
+                title: t.value.groupUsage,
+                items: [
+                  { key: "quota", label: t.value.menuQuota, icon: "Histogram" },
+                  { key: "usage", label: t.value.menuUsage, icon: "Cpu" }
+                ]
+              }
+            ]);
+
+            const regions = computed(() => [
+              { value: "wuhan", label: tx("武汉", "Wuhan") },
+              { value: "shanghai", label: tx("上海", "Shanghai") }
+            ]);
+
+            const toggleGpuSort = (field) => {
+              if (gpuSort.field === field) {
+                gpuSort.order = gpuSort.order === 'desc' ? 'asc' : 'desc';
+              } else {
+                gpuSort.field = field;
+                gpuSort.order = 'desc';
+              }
+            };
+
+            const sortHeaderText = (field, label) => {
+              if (gpuSort.field !== field) return `${label} ↕`;
+              return `${label} ${gpuSort.order === 'desc' ? '↓' : '↑'}`;
+            };
+
+            const gpuModels = computed(() => {
+              const rows = [
+                { key: "h100", name: "NVIDIA-H10080GPCIe", total: 5, idle: 0, used: 5, unit: tx("卡", "cards") },
+                { key: "a100", name: "NVIDIA-A100-80G", total: 14, idle: 2, used: 12, unit: tx("卡", "cards") },
+                { key: "910b", name: "Ascend-910B", total: 16, idle: 4, used: 12, unit: tx("卡", "cards") },
+                { key: "910a", name: "Ascend-910A", total: 20, idle: 9, used: 11, unit: tx("卡", "cards") },
+                { key: "t4", name: "NVIDIA-T4", total: 24, idle: 14, used: 10, unit: tx("卡", "cards") },
+                { key: "a800", name: "NVIDIA-A800", total: 12, idle: 5, used: 7, unit: tx("卡", "cards") },
+                { key: "l20", name: "NVIDIA-L20", total: 6, idle: 1, used: 5, unit: tx("卡", "cards") },
+                { key: "v100", name: "NVIDIA-V100-32G", total: 10, idle: 6, used: 4, unit: tx("卡", "cards") },
+                { key: "other", name: "other_gpus", total: null, idle: null, used: 0, unit: tx("卡", "cards") }
+              ];
+
+              const mapped = rows.map((item) => {
+                const ratio = item.total ? item.used / item.total : null;
+                let statusKey = "normal";
+                let statusLabel = t.value.statusNormal;
+                if (!item.total) {
+                  statusKey = "unlimited";
+                  statusLabel = t.value.statusUnlimited;
+                } else if (ratio >= 0.9) {
+                  statusKey = "high";
+                  statusLabel = t.value.statusHigh;
+                } else if (ratio >= 0.7) {
+                  statusKey = "warn";
+                  statusLabel = t.value.statusWarn;
+                }
+                return {
+                  ...item,
+                  totalText: item.total === null ? t.value.statusUnlimited : `${item.total}${item.unit}`,
+                  idleText: item.idle === null ? t.value.statusUnlimited : `${item.idle}${item.unit}`,
+                  usedText: `${item.used}${item.unit}`,
+                  hint: item.key === "other" ? t.value.gpuOtherHint : "",
+                  statusKey,
+                  statusLabel
+                };
+              });
+
+              return [...mapped].sort((a, b) => {
+                const field = gpuSort.field;
+                const aValue = a[field] === null || a[field] === undefined ? -1 : a[field];
+                const bValue = b[field] === null || b[field] === undefined ? -1 : b[field];
+                if (aValue !== bValue) {
+                  return gpuSort.order === 'desc' ? bValue - aValue : aValue - bValue;
+                }
+                return a.name.localeCompare(b.name);
+              });
+            });
+
+            const gpuSummary = computed(() => ({
+              usedValue: "66",
+              usedUnit: tx("卡", "cards")
+            }));
+
+            const compactStats = computed(() => ({
+              cpu: {
+                totalValue: tx("不限", "Unlimited"),
+                idleValue: tx("不限", "Unlimited"),
+                usedValue: "92",
+                usedUnit: "vCPU",
+                percent: 100,
+                percentText: tx("已使用", "Used"),
+                hint: t.value.unlimitedHint
+              },
+              memory: {
+                totalValue: "256",
+                totalUnit: "GiB",
+                idleValue: "42",
+                idleUnit: "GiB",
+                usedValue: "214",
+                usedUnit: "GiB",
+                percent: 84,
+                percentText: "84%"
+              }
+            }));
+
+            const scenes = computed(() => [
+              {
+                key: "inference",
+                title: t.value.inference,
+                subtitle: t.value.sceneSummaryInference,
+                gpuValue: "5",
+                gpuUnit: tx("卡", "cards"),
+                cpuValue: "80",
+                cpuUnit: "vCPU",
+                memoryValue: "160",
+                memoryUnit: "GiB",
+                items: 3,
+                details: [
+                  { name: "DeepSeek-R1-Distill-Qwen-1.5B-main-0", status: t.value.running, statusKey: "running", gpu: "1 AI card(s)", cpu: "16 vCPU", memory: "32 GiB" },
+                  { name: "llm-gateway-prod-02", status: t.value.running, statusKey: "running", gpu: "4 AI card(s)", cpu: "32 vCPU", memory: "96 GiB" },
+                  { name: "embed-service-01", status: t.value.starting, statusKey: "starting", gpu: "--", cpu: "32 vCPU", memory: "32 GiB" }
+                ]
+              },
+              {
+                key: "dev",
+                title: t.value.dev,
+                subtitle: t.value.sceneSummaryDev,
+                gpuValue: "0",
+                gpuUnit: tx("卡", "cards"),
+                cpuValue: "12",
+                cpuUnit: "vCPU",
+                memoryValue: "54",
+                memoryUnit: "GiB",
+                items: 2,
+                details: [
+                  { name: "devjob-tzvoan", status: t.value.running, statusKey: "running", gpu: "--", cpu: "4 vCPU", memory: "18 GiB" },
+                  { name: "devjob-xe16uq", status: t.value.running, statusKey: "running", gpu: "--", cpu: "4 vCPU", memory: "18 GiB" },
+                  { name: "devjob-cold-start-02", status: t.value.starting, statusKey: "starting", gpu: "--", cpu: "4 vCPU", memory: "18 GiB" }
+                ]
+              },
+              {
+                key: "instance",
+                title: t.value.instance,
+                subtitle: t.value.sceneSummaryInstance,
+                gpuValue: "0",
+                gpuUnit: tx("卡", "cards"),
+                cpuValue: "0",
+                cpuUnit: tx("核", "cores"),
+                memoryValue: "0",
+                memoryUnit: "GiB",
+                items: 0,
+                details: []
+              }
+            ]);
+
+            const detailFilters = reactive({ keyword: "", status: "all" });
+            const detailPage = ref(1);
+            const detailPageSize = 5;
+            const currentDetailScene = computed(() => scenes.value.find((scene) => scene.key === detailSceneKey.value) || scenes.value[0]);
+            const detailRows = computed(() => {
+              const keyword = detailFilters.keyword.trim().toLowerCase();
+              return currentDetailScene.value.details.filter((row) => {
+                const matchKeyword = !keyword || row.name.toLowerCase().includes(keyword);
+                const matchStatus = detailFilters.status === "all" || row.statusKey === detailFilters.status;
+                return matchKeyword && matchStatus;
+              });
+            });
+            const pagedDetailRows = computed(() => detailRows.value.slice((detailPage.value - 1) * detailPageSize, detailPage.value * detailPageSize));
+
+            watch(() => [detailSceneKey.value, detailFilters.keyword, detailFilters.status], () => {
+              detailPage.value = 1;
+            });
+
+            const openDetail = (sceneKey) => {
+              detailSceneKey.value = sceneKey;
+              detailFilters.keyword = "";
+              detailFilters.status = "all";
+              detailPage.value = 1;
+              detailVisible.value = true;
+            };
+
+            const refreshData = () => {
+              loading.value = true;
+              window.setTimeout(() => {
+                loading.value = false;
+                ElementPlus.ElMessage.success(tx("资源数据已刷新。", "Data refreshed."));
+              }, 650);
+            };
+
+            const exportView = () => {
+              ElementPlus.ElMessage.success(tx("已生成原型级导出视图。", "Prototype export generated."));
+            };
+
+            onMounted(() => {
+              window.setTimeout(() => {
+                loading.value = false;
+              }, 520);
+            });
+
+            return {
+              lang,
+              topActive,
+              sideActive,
+              region,
+              version,
+              t,
+              topMenus,
+              sideGroups,
+              regions,
+              gpuModels,
+              gpuSummary,
+              compactStats,
+              scenes,
+              detailVisible,
+              currentDetailScene,
+              detailFilters,
+              detailRows,
+              detailPage,
+              detailPageSize,
+              pagedDetailRows,
+              openDetail,
+              refreshData,
+              exportView,
+              loading,
+              gpuSort,
+              toggleGpuSort,
+              sortHeaderText
+            };
+          },
+          template: `
+            <div v-cloak>
+              <header class="smf-shell-header">
+                <div class="smf-logo-block">
+                  <span class="smf-logo-mark"></span>
+                  <span class="smf-logo-text">AGIOne</span>
+                </div>
+                <nav class="smf-top-nav" aria-label="top-menu">
+                  <button v-for="item in topMenus" :key="item.key" type="button" class="smf-top-nav-btn" :class="{ active: topActive === item.key }" @click="topActive = item.key">
+                    {{ item.label }}
+                  </button>
+                </nav>
+                <div class="smf-header-right">
+                  <el-dropdown trigger="click" @command="region = $event">
+                    <span class="smf-head-link" role="button">
+                      <el-icon><Location /></el-icon>
+                      {{ regions.find((item) => item.value === region).label }}
+                    </span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item v-for="item in regions" :key="item.value" :command="item.value">{{ item.label }}</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <span class="smf-head-link"><el-icon><Document /></el-icon>{{ t.docsCenter }}</span>
+                  <el-dropdown trigger="click" @command="lang = $event">
+                    <span class="smf-head-link" role="button">
+                      <el-icon><Globe /></el-icon>
+                      {{ lang === 'zh' ? '中文简体' : 'English' }}
+                    </span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="zh">中文简体</el-dropdown-item>
+                        <el-dropdown-item command="en">English</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <span class="smf-avatar">A</span>
+                </div>
+              </header>
+
+              <div class="smf-shell-body">
+                <aside class="smf-shell-side" aria-label="side-menu">
+                  <section v-for="group in sideGroups" :key="group.title" class="smf-side-group">
+                    <div class="smf-side-title">{{ group.title }}</div>
+                    <button v-for="item in group.items" :key="item.key" type="button" class="smf-side-item" :class="{ active: sideActive === item.key }" @click="sideActive = item.key">
+                      <el-icon><component :is="item.icon"></component></el-icon>
+                      <span>{{ item.label }}</span>
+                    </button>
+                  </section>
+                </aside>
+
+                <main class="smf-shell-main">
+                  <section class="smf-card-shell smf-header-box">
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="min-w-0 flex-1">
+                        <div class="smf-breadcrumb">{{ t.breadcrumb }}</div>
+                        <div class="smf-title-row">
+                          <h1>{{ t.pageTitle }}</h1>
+                          <span class="smf-version-pill">{{ version }}</span>
+                        </div>
+                        <div class="smf-header-desc">{{ t.pageDesc }}</div>
+                      </div>
+                      <div class="smf-header-actions">
+                        <el-button @click="exportView">{{ t.export }}</el-button>
+                        <el-button type="primary" @click="refreshData">{{ t.refresh }}</el-button>
+                      </div>
+                    </div>
+
+                    <div class="smf-overview-grid">
+                      <section class="smf-gpu-panel">
+                        <div class="smf-panel-head">
+                          <div>
+                            <h3>{{ t.gpuPool }}</h3>
+                            <p>{{ t.gpuSub }}</p>
+                          </div>
+                          <div class="smf-gpu-total">
+                            <div class="smf-total-card">
+                              <i class="smf-total-card-mark"></i>
+                              <div class="smf-total-card-copy">
+                                <div class="smf-total-card-value">
+                                  <strong>{{ gpuSummary.usedValue }}</strong>
+                                  <em>{{ gpuSummary.usedUnit }}</em>
+                                </div>
+                                <span>{{ t.gpuTotalUsed }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="smf-gpu-model-grid">
+                          <div class="smf-gpu-model-head">
+                            <span>XPU</span>
+                            <span>{{ t.total }}</span>
+                            <span class="smf-sort-toggle" :class="{ active: gpuSort.field === 'used' }" @click="toggleGpuSort('used')">{{ sortHeaderText('used', t.used) }}</span>
+                            <span class="smf-sort-toggle" :class="{ active: gpuSort.field === 'idle' }" @click="toggleGpuSort('idle')">{{ sortHeaderText('idle', t.idle) }}</span>
+                            <span class="smf-status-head">
+                              {{ t.status }}
+                              <el-tooltip :content="t.statusRule" placement="top" effect="light">
+                                <span class="smf-status-tip">?</span>
+                              </el-tooltip>
+                            </span>
+                          </div>
+                          <div class="smf-gpu-model-body">
+                            <div v-for="item in gpuModels" :key="item.key" class="smf-gpu-model-row">
+                              <div class="smf-gpu-model-name">
+                                <strong>{{ item.name }}</strong>
+                                <span v-if="item.hint">{{ item.hint }}</span>
+                              </div>
+                              <div class="smf-gpu-value">{{ item.totalText }}</div>
+                              <div class="smf-gpu-value">{{ item.usedText }}</div>
+                              <div class="smf-gpu-value">{{ item.idleText }}</div>
+                              <div>
+                                <span class="smf-status-pill" :class="item.statusKey">{{ item.statusLabel }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section class="smf-cm-panel">
+                        <article class="smf-cm-card">
+                          <div class="smf-cm-head">
+                            <h3>{{ t.cpu }}</h3>
+                            <div class="smf-cm-kpi">
+                              <strong>{{ compactStats.cpu.usedValue }}</strong>
+                              <span>{{ compactStats.cpu.usedUnit }}</span>
+                            </div>
+                          </div>
+                          <div class="smf-cm-progress">
+                            <div class="smf-cm-progress-meta">
+                              <span>{{ compactStats.cpu.hint }}</span>
+                              <span>{{ compactStats.cpu.percentText }}</span>
+                            </div>
+                            <div class="smf-cm-progress-track">
+                              <div class="smf-cm-progress-fill" :style="{ width: compactStats.cpu.percent + '%' }"></div>
+                            </div>
+                          </div>
+                          <div class="smf-cm-note">{{ compactStats.cpu.hint }}</div>
+                          <div class="smf-cm-data">
+                            <div class="smf-metric-box">
+                              <label>{{ t.total }}</label>
+                              <strong>{{ compactStats.cpu.totalValue }}</strong>
+                            </div>
+                            <div class="smf-metric-box">
+                              <label>{{ t.used }}</label>
+                              <strong>{{ compactStats.cpu.usedValue }}</strong>
+                              <span class="smf-value-unit">{{ compactStats.cpu.usedUnit }}</span>
+                            </div>
+                            <div class="smf-metric-box">
+                              <label>{{ t.idle }}</label>
+                              <strong>{{ compactStats.cpu.idleValue }}</strong>
+                            </div>
+                          </div>
+                        </article>
+
+                        <article class="smf-cm-card">
+                          <div class="smf-cm-head">
+                            <h3>{{ t.memory }}</h3>
+                            <div class="smf-cm-kpi">
+                              <strong>{{ compactStats.memory.usedValue }}</strong>
+                              <span>{{ compactStats.memory.usedUnit }}</span>
+                            </div>
+                          </div>
+                          <div class="smf-cm-progress">
+                            <div class="smf-cm-progress-meta">
+                              <span>{{ t.used }}</span>
+                              <span>{{ compactStats.memory.percentText }}</span>
+                            </div>
+                            <div class="smf-cm-progress-track">
+                              <div class="smf-cm-progress-fill" :style="{ width: compactStats.memory.percent + '%' }"></div>
+                            </div>
+                          </div>
+                          <div class="smf-cm-data">
+                            <div class="smf-metric-box">
+                              <label>{{ t.total }}</label>
+                              <strong>{{ compactStats.memory.totalValue }}</strong>
+                              <span class="smf-value-unit">{{ compactStats.memory.totalUnit }}</span>
+                            </div>
+                            <div class="smf-metric-box">
+                              <label>{{ t.used }}</label>
+                              <strong>{{ compactStats.memory.usedValue }}</strong>
+                              <span class="smf-value-unit">{{ compactStats.memory.usedUnit }}</span>
+                            </div>
+                            <div class="smf-metric-box">
+                              <label>{{ t.idle }}</label>
+                              <strong>{{ compactStats.memory.idleValue }}</strong>
+                              <span class="smf-value-unit">{{ compactStats.memory.idleUnit }}</span>
+                            </div>
+                          </div>
+                        </article>
+                      </section>
+                    </div>
+                  </section>
+
+                  <section class="smf-card-shell smf-content-box" v-loading="loading">
+                    <div class="smf-content-head">
+                      <div class="smf-content-title">
+                        <strong>{{ t.contentTitle }}</strong>
+                      </div>
+                    </div>
+
+                    <template v-if="scenes.length">
+                      <div class="smf-card-grid">
+                        <article v-for="scene in scenes" :key="scene.key" class="smf-scene-card">
+                          <div>
+                            <h4>{{ scene.title }}</h4>
+                            <p>{{ scene.subtitle }}</p>
+                          </div>
+                          <div class="smf-scene-metrics">
+                            <div class="smf-scene-mini">
+                              <label>XPU</label>
+                              <strong>{{ scene.gpuValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ scene.gpuUnit }}</span></strong>
+                            </div>
+                            <div class="smf-scene-mini">
+                              <label>{{ t.cpu }}</label>
+                              <strong>{{ scene.cpuValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ scene.cpuUnit }}</span></strong>
+                            </div>
+                            <div class="smf-scene-mini">
+                              <label>{{ t.memory }}</label>
+                              <strong>{{ scene.memoryValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ scene.memoryUnit }}</span></strong>
+                            </div>
+                          </div>
+                          <div class="smf-chip-row">
+                            <span class="smf-meta-chip">
+                              <el-icon><Grid /></el-icon>
+                              {{ t.activeItemsShort }} {{ scene.items }}
+                            </span>
+                          </div>
+                          <div class="smf-scene-bottom">
+                            <el-button type="primary" plain @click="openDetail(scene.key)">{{ t.viewDetails }}</el-button>
+                          </div>
+                        </article>
+                      </div>
+                    </template>
+                    <div v-else class="smf-empty-box">
+                      <el-empty :description="lang === 'zh' ? '当前暂无资源场景。' : 'No resource scenes available.'"></el-empty>
+                    </div>
+                  </section>
+                </main>
+              </div>
+
+              <el-drawer v-model="detailVisible" :title="t.drawerTitle" size="1080px" append-to-body :with-header="true">
+                <div class="smf-drawer-shell pr-2">
+                  <div class="smf-drawer-top">
+                    <div class="smf-drawer-section">
+                      <div class="smf-drawer-title">
+                        <strong>{{ currentDetailScene.title }}</strong>
+                        <span>{{ t.drawerSummary }}</span>
+                      </div>
+                      <div class="smf-drawer-kpis">
+                        <div class="smf-metric-box">
+                          <label>{{ t.drawerScene }}</label>
+                          <strong>{{ currentDetailScene.title }}</strong>
+                        </div>
+                        <div class="smf-metric-box">
+                          <label>{{ t.activeItems }}</label>
+                          <strong>{{ currentDetailScene.items }}</strong>
+                        </div>
+                        <div class="smf-metric-box">
+                          <label>{{ t.drawerGpu }}</label>
+                          <strong>{{ currentDetailScene.gpuValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ currentDetailScene.gpuUnit }}</span></strong>
+                        </div>
+                        <div class="smf-metric-box">
+                          <label>{{ t.drawerCpu }}</label>
+                          <strong>{{ currentDetailScene.cpuValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ currentDetailScene.cpuUnit }}</span></strong>
+                        </div>
+                        <div class="smf-metric-box">
+                          <label>{{ t.drawerMemory }}</label>
+                          <strong>{{ currentDetailScene.memoryValue }}<span style="margin-left:4px;font-size:12px;font-weight:500;color:#64748b;">{{ currentDetailScene.memoryUnit }}</span></strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="smf-drawer-bottom">
+                    <div class="smf-drawer-section" style="margin-bottom:0;display:flex;flex-direction:column;min-height:0;flex:1;">
+                      <div class="smf-drawer-title">
+                        <strong>{{ t.drawerList }}</strong>
+                      </div>
+                      <div class="smf-filter-row">
+                        <el-input v-model="detailFilters.keyword" :placeholder="t.drawerSearchPlaceholder" clearable style="width: 360px;">
+                          <template #prefix><el-icon><Search /></el-icon></template>
+                        </el-input>
+                        <el-select v-model="detailFilters.status" style="width: 180px;">
+                          <el-option :label="t.filterAll" value="all"></el-option>
+                          <el-option :label="t.running" value="running"></el-option>
+                          <el-option :label="t.starting" value="starting"></el-option>
+                        </el-select>
+                      </div>
+                      <div class="smf-drawer-table-wrap">
+                        <el-table :data="pagedDetailRows" height="100%" stripe border>
+                          <el-table-column prop="name" :label="t.drawerSearch" min-width="280" show-overflow-tooltip></el-table-column>
+                          <el-table-column :label="t.drawerStatus" min-width="120">
+                            <template #default="{ row }">
+                              <span class="smf-status" :class="row.statusKey">
+                                <i class="dot"></i>
+                                {{ row.status }}
+                              </span>
+                            </template>
+                          </el-table-column>
+                          <el-table-column prop="gpu" :label="t.drawerGpu" min-width="140"></el-table-column>
+                          <el-table-column prop="cpu" :label="t.drawerCpu" min-width="120"></el-table-column>
+                          <el-table-column prop="memory" :label="t.drawerMemory" min-width="120"></el-table-column>
+                        </el-table>
+                      </div>
+                      <div class="smf-drawer-pagination">
+                        <el-pagination v-model:current-page="detailPage" :page-size="detailPageSize" :total="detailRows.length" layout="prev, pager, next" background></el-pagination>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </el-drawer>
+            </div>
+          `
+        };
+
+        const app = createApp(App);
+        Object.keys(window.ElementPlusIconsVue).forEach((key) => {
+          app.component(key, window.ElementPlusIconsVue[key]);
+        });
+        app.use(window.ElementPlus);
+        app.mount("#app");
+      })();
+    </script>
+  </body>
+</html>
